@@ -1,11 +1,9 @@
 const { Web3 } = require('web3');
-
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { issuerService } = require('../services');
 
 const addIssuer = catchAsync(async (req, res) => {
-
     if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
         const web3 = new Web3(window.ethereum);
         const issuer = await issuerService.createIssuer(web3.eth.getAccounts()[0], req.body.address);
