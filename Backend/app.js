@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const xss = require('xss-clean');
 const compression = require('compression');
 const cors = require('cors');
-const routes = require('./routes');
+const routes = require('./routes/v1');
 
 const start = function () {
     const app = express();

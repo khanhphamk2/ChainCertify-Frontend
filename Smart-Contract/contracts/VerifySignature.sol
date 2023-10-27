@@ -15,6 +15,8 @@ How to Sign and Verify
 */
 
 contract VerifySignature {
+    constructor() {}
+
     function getCertHash(
         address _holder,
         string memory _data,
@@ -22,7 +24,10 @@ contract VerifySignature {
         uint _expiration,
         uint _nonce
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_holder, _data, _issue, _expiration, _nonce));
+        return
+            keccak256(
+                abi.encodePacked(_holder, _data, _issue, _expiration, _nonce)
+            );
     }
 
     function getEthSignedCertHash(
@@ -43,7 +48,13 @@ contract VerifySignature {
         uint _nonce,
         bytes memory signature
     ) public pure returns (bool) {
-        bytes32 certHash = getCertHash(_holder, _data, _issue, _expiration, _nonce);
+        bytes32 certHash = getCertHash(
+            _holder,
+            _data,
+            _issue,
+            _expiration,
+            _nonce
+        );
         bytes32 ethSignedCertHash = getEthSignedCertHash(certHash);
 
         return recoverSigner(ethSignedCertHash, signature) == _signer;

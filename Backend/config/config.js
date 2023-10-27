@@ -6,11 +6,12 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const envVarsSchema = Joi.object().keys({
     PORT: Joi.number().default(3000),
-    WEB3_PROVIDER: Joi.string().required().description('Network URL'),
-    // CERT: Joi.string().required().description('Certificate contract address'),
-    // ISSUER: Joi.string().required().description('Issuer contract address'),
-    // HOLDER: Joi.string().required().description('Holder contract address'),
-    // VERIFY: Joi.string().required().description('Verification contract address'),
+    WEB3_PROVIDER_DEV: Joi.string().required().description('Network URL'),
+    ISSUER_ADDRESS: Joi.string().required().description('Issuer address'),
+    ISSUER_CONTRACT_ADDRESS: Joi.string().required().description('Issuer contract address'),
+    CERTIFICATE_CONTRACT_ADDRESS: Joi.string().required().description('Certificate contract address'),
+    VERIFIER_CONTRACT_ADDRESS: Joi.string().required().description('Verification contract address'),
+    HOLDER_CONTRACT_ADDRESS: Joi.string().required().description('Holder contract address'),
 })
     .unknown();
 
@@ -29,9 +30,10 @@ module.exports = {
     //         useUnifiedTopology: true,
     //     },
     // },
-    // web3Provider: envVars.NETWORK,
-    // issuerAddress: envVars.ISSUER,
-    // certificateAddress: envVars.CERTI,
-    // verificationAddress: envVars.VERIFY,
-    // holderAddress: envVars.HOLDER,
+    web3Provider: envVars.WEB3_PROVIDER_DEV,
+    issuerAddress: envVars.ISSUER_ADDRESS,
+    issuerContractAddress: envVars.ISSUER_CONTRACT_ADDRESS,
+    certificateContractAddress: envVars.CERTIFICATE_CONTRACT_ADDRESS,
+    verifierContractAddress: envVars.VERIFIER_CONTRACT_ADDRESS,
+    holderContractAddress: envVars.HOLDER_CONTRACT_ADDRESS,
 };

@@ -5,11 +5,9 @@ let verify = artifacts.require("VerifySignature");
 let holder = artifacts.require("Holder");
 let cert = artifacts.require("Certificates");
 
-module.exports = function (deployer) {
-  deployer.deploy(verify);
-  deployer.deploy(issuer, config.ISSUER).then(function () {
-    return deployer.deploy(holder, issuer.address).then(function () {
-      return deployer.deploy(cert, issuer.address, holder.address, verify.address);
-    });
-  })
+module.exports = async function (deployer) {
+  await deployer.deploy(verify);
+  await deployer.deploy(issuer, config.ISSUER);
+  await deployer.deploy(holder, issuer.address);
+  await deployer.deploy(cert, issuer.address, holder.address, verify.address);
 };

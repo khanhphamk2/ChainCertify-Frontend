@@ -1,14 +1,13 @@
 const config = require('../config/config');
+const httpStatus = require('http-status');
 
-async function showUser() {
+const showUser = async () =>{
     try {
-        const user = config.port;
-        res.status(200).send(user);
+        return config.port;
     } catch (error) {
-        next(error);
+        console.error('Lỗi khi gọi hàm showUser:', error);
     }
 }
-
 
 module.exports = {
     showUser,
