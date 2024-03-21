@@ -2,14 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "./Issuer.sol";
-import "./Holder.sol";
-import "./VerifySignature.sol";
-import "../node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract Certificates {
     Issuer private issuer;
-    Holder private holder;
-    VerifySignature private sig;
     struct Certificate {
         address holder;
         address issuer;
@@ -23,13 +18,9 @@ contract Certificates {
     mapping(address => uint256) public certificateCounts;
 
     constructor(
-        address _issuerContractAddress,
-        address _holderContractAddress,
-        address _verifySignatureContractAddress
+        address _issuerContractAddress
     ) payable {
         issuer = Issuer(_issuerContractAddress);
-        holder = Holder(_holderContractAddress);
-        sig = VerifySignature(_verifySignatureContractAddress);
     }
 
     event CertificateIssued(
@@ -71,8 +62,6 @@ contract Certificates {
             _expiration,
             false
         );
-        // sig.getCertHash(_holder, information, _issue, _expiration, 0);
-        holder.addHolder(_holder);
         certificateCounts[_holder]++;
         emit CertificateIssued(
             _holder,
@@ -106,7 +95,6 @@ contract Certificates {
         address _holder,
         bytes32 _certi
     ) external onlyAuthorizedIssuer returns (bool) {
-        require(holder.isHolder(_holder) == false, "Holder is not exist");
 
         require(
             certificates[_holder][_certi].isRevoked == false,
@@ -123,15 +111,4 @@ contract Certificates {
 
         return true;
     }
-
-    // function verifyCertificate(
-    //     address _holder,
-    //     bytes32 _certi
-    // ) external view returns (bool) {
-    //     return (!certificates[_holder][_certi].isRevoked &&
-    //         VerifySignature.verify(
-    //             certificates[_holder][_certi].issuer,
-    //             certificates[_holder][_certi].data,
-    //         ));
-    // }
 }

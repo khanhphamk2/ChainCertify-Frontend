@@ -1,13 +1,10 @@
-const config = require("../config");
+const config = require("../config.js");
 
-let issuer = artifacts.require("Issuer");
-let verify = artifacts.require("VerifySignature");
-let holder = artifacts.require("Holder");
-let cert = artifacts.require("Certificates");
+let issuer = artifacts.require("Issuer.sol");
+// let cert = artifacts.require("Certificates.sol");
 
 module.exports = async function (deployer) {
-  await deployer.deploy(verify);
   await deployer.deploy(issuer, config.ISSUER);
-  await deployer.deploy(holder, issuer.address);
-  await deployer.deploy(cert, issuer.address, holder.address, verify.address);
+  // await deployer.deploy(holder, issuer.address);
+  // await deployer.deploy(cert, issuer.address, holder.address);
 };
