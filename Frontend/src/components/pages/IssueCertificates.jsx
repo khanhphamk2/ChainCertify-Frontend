@@ -99,10 +99,10 @@ const IssueCertificates = () => {
           method: 'eth_requestAccounts',
         });
         const transactionParameters = {
-          to: '0x5614e6392AaD6D8645D20b3929411Aa277f401E6', // Địa chỉ hợp đồng của bạn
+          to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
           from: accounts[0],
-          value: '0x00', // Giá trị giao dịch (0 ETH trong trường hợp này)
-          data: '0xYourTransactionData', // Dữ liệu giao dịch
+          value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
+          data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
         };
 
         const txHash = await provider.request({
@@ -112,7 +112,7 @@ const IssueCertificates = () => {
 
         console.log('Transaction sent:', txHash);
         setIsConfirmLoading(false);
-        window.location.href = '/pending';
+        openModal();
       } catch (error) {
         console.error('Transaction failed:', error);
         setIsConfirmLoading(false);
