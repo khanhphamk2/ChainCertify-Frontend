@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Typography,
   Card,
   Input,
-  Select,
-  Option,
   Textarea,
   Button,
   Spinner,
@@ -13,51 +11,30 @@ import {
   DialogHeader,
   DialogBody,
   DialogFooter,
-} from "@material-tailwind/react";
-import { useParams } from "react-router-dom";
+} from '@material-tailwind/react';
+import { useParams } from 'react-router-dom';
 
 const RevokeCertificate = () => {
   const { address } = useParams();
-  const [curInst, setCurInst] = useState("uit");
+  const [curInst, setCurInst] = useState('uit');
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [certPubKey, setCertPubKey] = useState(address || "");
+  const [certPubKey, setCertPubKey] = useState(address || '');
   const [showAlert, setShowAlert] = useState({
     show: false,
-    message: "",
+    message: '',
   });
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [certChecked, setCertChecked] = useState(false);
-  const validKey = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
+  const validKey = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4';
   const [icon, setIcon] = useState({
-    title: "key",
-    color: "gray",
+    title: 'key',
+    color: 'gray',
   });
   const [gasFee, setGasFee] = useState(
     (0.0001 + Math.random() * (0.001 - 0.0001)).toFixed(10)
   );
-  const certificateTypes = [
-    {
-      institution: "uit",
-      name: "UIT - University Of Information Technology",
-      types: [
-        "Associate's Degree",
-        "Bachelor's Degree",
-        "Master's Degree",
-        "Doctoral Degree",
-        "Professional Degrees",
-      ],
-    },
-    {
-      institution: "iig",
-      name: "IIG Vietnam",
-      types: [
-        "TOEIC Listening & Reading",
-        "TOEIC Speaking & Writing",
-        "TOEIC Bridge",
-      ],
-    },
-  ];
+  const [showFraudModal, setShowFraudModal] = useState(false); // State for fraud detection modal
 
   const closeModal = () => setShowModal(false);
 
@@ -75,13 +52,13 @@ const RevokeCertificate = () => {
     setTimeout(() => {
       if (checkValid(certPubKey)) {
         setIcon({
-          title: "check",
-          color: "green",
+          title: 'check',
+          color: 'green',
         });
       } else {
         setIcon({
-          title: "xmark",
-          color: "red",
+          title: 'xmark',
+          color: 'red',
         });
       }
       setCertChecked(true);
@@ -93,7 +70,7 @@ const RevokeCertificate = () => {
     if (!certChecked) {
       setShowAlert({
         show: true,
-        message: "Certificate public key has not been checked !",
+        message: 'Certificate public key has not been checked !',
       });
       setTimeout(() => {
         setShowAlert({
@@ -105,7 +82,7 @@ const RevokeCertificate = () => {
       if (!checkValid(certPubKey)) {
         setShowAlert({
           show: true,
-          message: "Certificate public key is not valid !",
+          message: 'Certificate public key is not valid !',
         });
         setTimeout(() => {
           setShowAlert({
@@ -114,7 +91,7 @@ const RevokeCertificate = () => {
           });
         }, 3000);
       } else {
-        setShowModal(true);
+        setShowFraudModal(true); // Show fraud detection modal
       }
     }
   };
@@ -123,24 +100,29 @@ const RevokeCertificate = () => {
     setIsConfirmLoading(true);
     setTimeout(() => {
       setIsConfirmLoading(false);
-      window.location.href = "/pending";
+      window.location.href = '/pending';
     }, 2000);
+  };
+
+  const handleFraudContinue = () => {
+    setShowFraudModal(false);
+    setShowModal(true); // Show the confirmation modal
+  };
+
+  const handleFraudCancel = () => {
+    setShowFraudModal(false);
   };
 
   return (
     <div className="flex-col w-full">
-      <div className="flex flex-col text-center py-10 pb-1">
-        <Typography variant="h1">Revoke your certificate !</Typography>
-        <Typography variant="lead">
-          Send revocation request to issuer to verify and execute revocation
-          process
-        </Typography>
-      </div>
       <div className="mb-7 flex justify-center">
-        <Card className="h-auto w-[40%] mt-5 overflow-hidden p-8" color="white">
+        <Card
+          className="h-auto w-[40%] mt-10 overflow-hidden p-8"
+          color="white"
+        >
           <div>
             <Typography variant="h4" color="blue-gray">
-              Revocation Request
+              Certificate Revocation
             </Typography>
             <Typography color="gray" className="font-normal">
               Fulfill all information below
@@ -148,12 +130,12 @@ const RevokeCertificate = () => {
           </div>
           <div className="flex flex-col gap-5 pt-5">
             <Input
-              label="Owner Name"
+              label="Holder Address"
               icon={<i className="fas fa-user text-xs" />}
             />
             <div className="flex gap-3">
               <Input
-                label="Certificate Public Key"
+                label="Certificate Hash"
                 icon={
                   <i
                     className={`fas fa-${icon.title} text-${icon.color}-500 text-xs`}
@@ -163,10 +145,10 @@ const RevokeCertificate = () => {
                 value={certPubKey}
               />
               <Button onClick={handleCheck}>
-                {isLoading ? <Spinner className="h-4 w-4" /> : "Check"}
+                {isLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
               </Button>
             </div>
-            {checkValid(certPubKey) && certChecked && (
+            {certChecked && (
               <div className="flex px-2 items-center">
                 <div>
                   <i className="fas fa-file-pdf text-red-500 mr-1"></i>
@@ -187,11 +169,11 @@ const RevokeCertificate = () => {
               </Button>
               <div
                 className={`fixed inset-0 flex items-start justify-end m-5 ${
-                  showAlert.show ? "z-50" : "z-0"
+                  showAlert.show ? 'z-50' : 'z-0'
                 } transition-opacity duration-300 ${
                   showAlert.show
-                    ? "opacity-100 pointer-events-auto"
-                    : "opacity-0 pointer-events-none"
+                    ? 'opacity-100 pointer-events-auto'
+                    : 'opacity-0 pointer-events-none'
                 }`}
               >
                 <Alert
@@ -218,11 +200,11 @@ const RevokeCertificate = () => {
           <div className="flex flex-col items-center mb-3">
             <i className="fab fa-ethereum text-[60px] text-blue-gray-800 mr-2"></i>
             <Typography color="black" variant="h5" className="py-3">
-              Your revocation request costs{" "}
+              Your revocation request costs{' '}
               <span className="text-red-500">{gasFee} ETH</span> to execute !
             </Typography>
             <p className="text-gray-600">
-              Once you have revoked this certificate, it will become{" "}
+              Once you have revoked this certificate, it will become{' '}
               <span className="font-bold">invalid</span>, and you will no longer
               be able to use it
             </p>
@@ -238,7 +220,35 @@ const RevokeCertificate = () => {
             <span>Cancel</span>
           </Button>
           <Button variant="gradient" onClick={handleConfirm}>
-            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : "Confirm"}
+            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Confirm'}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+      <Dialog open={showFraudModal} handler={handleFraudCancel}>
+        <DialogHeader>Fraud Detection Warning</DialogHeader>
+        <DialogBody divider>
+          <p className="text-center mb-3">
+            {' '}
+            <i className="fas fa-warning text-[60px] text-yellow-700 mr-2"></i>
+          </p>
+          <p className="text-black">
+            Holder from address{' '}
+            <span className="text-red-600">{certPubKey}</span> is at risk of
+            fraud. Are you sure you want to continue with this action? This
+            could be a potential fraud attempt.
+          </p>
+        </DialogBody>
+        <DialogFooter>
+          <Button
+            variant="text"
+            color="red"
+            onClick={handleFraudCancel}
+            className="mr-1"
+          >
+            <span>Cancel</span>
+          </Button>
+          <Button variant="gradient" onClick={handleFraudContinue}>
+            Continue
           </Button>
         </DialogFooter>
       </Dialog>

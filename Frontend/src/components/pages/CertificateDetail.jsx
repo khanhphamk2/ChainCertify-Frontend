@@ -1,31 +1,22 @@
-import { Typography } from "@material-tailwind/react";
-import React, { useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+import { Typography } from '@material-tailwind/react';
+import React, { useState } from 'react';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 const CertificateDetail = ({ pdfUrl }) => {
-  const [numPages, setNumPages] = useState(null);
-
   return (
-    <div className="m-7">
-      <div className="flex flex-col self-center">
-        <Typography variant="h3">TOEIC Certificates - 2018</Typography>
-        <p>Address: 0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c</p>
+    <div className="m-7 w-4/5">
+      <div className="flex flex-col gap-1">
+        <Typography variant="h3">TOEIC Certificates - 2021</Typography>
+        <p className="font-light text-gray-500 text-base mr-1">
+          0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c{' '}
+          <i className="fas fa-copy text-gray-500 copy-icon text-base" />
+        </p>
+        <Typography variant="small" color="indigo">
+          {'Size: 1.5 MB | Uploaded at: 2023-02-04'}
+        </Typography>
       </div>
-      <div>
-        <Document
-          file={pdfUrl}
-          onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-          className="shadow-lg rounded-md"
-        >
-          {Array.apply(null, Array(numPages))
-            .map((x, i) => i + 1)
-            .map((page) => (
-              <Page pageNumber={page} renderTextLayer={false} className="m-4" />
-            ))}
-        </Document>
+      <div className="my-3">
+        <object class="pdf" data={pdfUrl} width="100%" height="800px"></object>
       </div>
     </div>
   );

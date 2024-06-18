@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Navbar,
   MobileNav,
   Typography,
   Button,
   IconButton,
-} from "@material-tailwind/react";
-import Metamask from "../assets/icons/metamask.svg";
+} from '@material-tailwind/react';
+import Metamask from '../assets/icons/metamask.svg';
 
 function Header() {
   const [openNav, setOpenNav] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
+  const [walletAddress, setWalletAddress] = useState('');
 
   useEffect(() => {
     window.addEventListener(
-      "resize",
+      'resize',
       () => window.innerWidth >= 960 && setOpenNav(false)
     );
 
-    const savedWalletAddress = localStorage.getItem("walletAddress");
+    const savedWalletAddress = localStorage.getItem('walletAddress');
     if (savedWalletAddress) {
       setWalletAddress(savedWalletAddress);
     }
@@ -30,24 +30,24 @@ function Header() {
       if (window.ethereum) {
         // Yêu cầu quyền truy cập ví từ người dùng
         const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
+          method: 'eth_requestAccounts',
         });
 
         // accounts[0] chứa địa chỉ Ethereum của người dùng sau khi kết nối thành công
         setWalletAddress(accounts[0]);
-        localStorage.setItem("walletAddress", accounts[0]);
-        console.log("Connected with address:", walletAddress);
+        localStorage.setItem('walletAddress', accounts[0]);
+        console.log('Connected with address:', walletAddress);
       } else {
-        console.log("MetaMask is not available.");
+        console.log('MetaMask is not available.');
       }
     } catch (error) {
-      console.error("Error connecting wallet:", error);
+      console.error('Error connecting wallet:', error);
     }
   };
 
   React.useEffect(() => {
     window.addEventListener(
-      "resize",
+      'resize',
       () => window.innerWidth >= 960 && setOpenNav(false)
     );
   }, []);
@@ -58,7 +58,7 @@ function Header() {
         as="li"
         variant="small"
         color="white"
-        className="p-1 font-normal"
+        className="p-1 font-semibold"
       >
         <a href="/" className="flex items-center">
           Home
@@ -68,7 +68,7 @@ function Header() {
         as="li"
         variant="small"
         color="white"
-        className="p-1 font-normal"
+        className="p-1 font-semibold"
       >
         <a href="/about-us" className="flex items-center">
           About Us
@@ -78,7 +78,7 @@ function Header() {
         as="li"
         variant="small"
         color="white"
-        className="p-1 font-normal"
+        className="p-1 font-semibold"
       >
         <a href="/get" className="flex items-center">
           Certificates
@@ -88,7 +88,7 @@ function Header() {
         as="li"
         variant="small"
         color="white"
-        className="p-1 font-normal"
+        className="p-1 font-semibold"
       >
         <a href="/guide" className="flex items-center">
           Guide
@@ -101,13 +101,13 @@ function Header() {
     <Navbar
       variant="gradient"
       color="blue-gray"
-      className="mx-auto w-full py-2 px-4 mt-4 lg:px-8 lg:py-4 from-blue-gray-900 to-blue-gray-800 rounded-full"
+      className="mx-auto w-4/5 py-2 px-4 mt-4 lg:px-8 lg:py-4 from-blue-700 to-blue-600 rounded-full"
     >
       <div className="container mx-auto flex items-center justify-between white">
         <Typography
           as="a"
           href="/"
-          className="mr-4 cursor-pointer py-1.5 font-medium"
+          className="mr-4 cursor-pointer py-1.5 font-semibold"
         >
           ChainCertify
         </Typography>
@@ -117,7 +117,7 @@ function Header() {
           className="flex items-center gap-3 rounded-full"
           onClick={connectWallet}
         >
-          {walletAddress !== "" ? (
+          {walletAddress !== '' ? (
             <>
               <span>{walletAddress.substring(0, 15)}...</span>
               <img src={Metamask} alt="metamask" className="h-6 w-6" />
