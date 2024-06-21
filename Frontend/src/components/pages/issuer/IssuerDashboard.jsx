@@ -1,46 +1,45 @@
 import React from 'react';
-import HomeCard from './display/HomeCard';
+import HomeCard from '../../home/display/HomeCard';
 import { Typography } from '@material-tailwind/react';
 
 const introduction = [
   {
     id: 0,
-    title: 'Certificates',
-    description: 'Manage all your certificates and their status',
-    button: 'View',
-    plug: 'get',
-  },
-  {
-    id: 1,
-    title: 'Issuance Request',
+    title: 'Issue Certificates',
     description:
       'Send your certificates to issuer to verify and commit it to blockchain',
     button: 'Issue',
-    plug: 'issue-request',
+    plug: 'issue',
   },
   {
-    id: 2,
-    title: 'Revocation Request',
+    id: 1,
+    title: 'Revoke Certificates',
     description:
       'Send revocation request to issuer to verify and execute revocation process',
     button: 'Revoke',
-    plug: 'revoke-request',
+    plug: 'revoke',
+  },
+  {
+    id: 2,
+    title: 'Pending Requests',
+    description: 'Manage all your pending requests from holders',
+    button: 'View',
+    plug: 'requests',
   },
   {
     id: 3,
-    title: 'Share',
-    description:
-      'Share your certificates with another user or view certificates shared by others.',
-    button: 'Share',
-    plug: 'share',
+    title: 'Issuers',
+    description: 'View all issuers in the system and their activity history',
+    button: 'Detail',
+    plug: 'issuers',
   },
 ];
 
-function Home() {
+function IssuerDashboard() {
   return (
     <div className="flex flex-col justify-center w-3/5">
-      <div className="flex flex-col text-center mt-4">
-        <Typography variant="h1">Hello, Holder!</Typography>
+      <div className="flex flex-col text-center my-6">
+        <Typography variant="h1">Hello, Issuer!</Typography>
       </div>
       <div className="flex flex-wrap justify-center">
         {introduction.map((instance) => (
@@ -57,4 +56,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default IssuerDashboard;

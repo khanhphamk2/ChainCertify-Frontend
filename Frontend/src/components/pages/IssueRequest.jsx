@@ -17,8 +17,7 @@ import {
   Tooltip,
 } from '@material-tailwind/react';
 import DatePicker from './controls/DatePicker';
-import detectEthereumProvider from '@metamask/detect-provider';
-const IssueCertificates = () => {
+const IssueRequest = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [gasFee, setGasFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -53,7 +52,7 @@ const IssueCertificates = () => {
   const certificateHash = '0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19';
 
   const ipfsHash =
-    'Qmau5p38VtDaYBuAe4JQxxZUmP2QauLgd5A7GiwqJfBibS';
+    'bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly';
 
   const handleUploadFile = (event) => {
     const file = event.target.files[0];
@@ -89,49 +88,16 @@ const IssueCertificates = () => {
 
   const closeModal = () => setShowModal(false);
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     setIsConfirmLoading(true);
-    const provider = await detectEthereumProvider();
-
-    if (provider) {
-      try {
-        const accounts = await provider.request({
-          method: 'eth_requestAccounts',
-        });
-        const transactionParameters = {
-          to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
-          from: accounts[0],
-          value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
-          data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
-        };
-
-        const txHash = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [transactionParameters],
-        });
-
-        console.log('Transaction sent:', txHash);
-        setIsConfirmLoading(false);
-        openModal();
-      } catch (error) {
-        console.error('Transaction failed:', error);
-        setIsConfirmLoading(false);
-      }
-    } else {
-      console.error('Please install MetaMask!');
+    setTimeout(() => {
       setIsConfirmLoading(false);
-    }
+      window.location.href = '/pending';
+    }, 2000);
   };
 
   return (
     <div className="flex-col w-full">
-      <div className="flex flex-col text-center py-10 pb-1">
-        <Typography variant="h1">Issue new certificate !</Typography>
-        <Typography variant="lead">
-          Send your certificates to issuer to verify and commit it to
-          blockchain.
-        </Typography>
-      </div>
       <div className="mb-7">
         <div className="flex justify-center gap-10">
           <Card
@@ -140,24 +106,30 @@ const IssueCertificates = () => {
           >
             <div>
               <Typography variant="h4" color="blue-gray">
-                Certificate Information
+                Issuance Request Form
               </Typography>
               <Typography color="gray" className="font-normal">
                 Fulfill all information below
               </Typography>
+              <Button size="sm" color="blue" className="my-4 mb-2">
+                Import from profile
+              </Button>
             </div>
             <div className="flex flex-col gap-5 pt-5">
               <Input
                 label="Holder Name"
                 icon={<i className="fas fa-user text-xs" />}
+                value={'Nguyen Van A'}
               />
               <Input
                 label="Indentity Number"
                 icon={<i className="fas fa-address-card text-xs" />}
+                value={'052298846445'}
               />
               <Input
                 label="Holder Address"
                 icon={<i className="fas fa-hashtag text-xs" />}
+                value={'0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19'}
               />
               <Select label="Institution" onChange={handleSelectInstitution}>
                 {certificateTypes.map((item, index) => (
@@ -258,54 +230,24 @@ const IssueCertificates = () => {
                 You have to agree with our terms and conditions.
               </Alert>
             </div>
-            <Button color="blue" className="m-2" onClick={handleConfirm}>
+            <Button color="blue" className="m-2" onClick={openModal}>
               {isLoading ? <Spinner className="h-4 w-4" /> : 'Execute'}
             </Button>
           </Card>
         </div>
       </div>
       <Dialog open={showModal} handler={closeModal}>
-        <DialogHeader>Issue Success!</DialogHeader>
+        <DialogHeader>Request Success</DialogHeader>
         <DialogBody divider>
           <div className="flex flex-col items-center mb-3">
-            <i className="fas fa-check text-[60px] text-green-500 mr-2"></i>
+            <i className="fas fa-check text-[60px] text-green-600 mr-2"></i>
             <Typography color="black" variant="h5" className="py-3">
-              Your certificate has been successfully issued and stored on the
-              blockchain!
+              Request has been successfully submitted
             </Typography>
-            <p className="text-gray-600">
-              Your certificate is now awaiting verification. You can track the
-              progress using the hash below:
+            <p className="text-gray-600 px-2">
+              Your issuance request is being processed. Please wait for all
+              related issuers to confirm your request.
             </p>
-            <div className="bg-gray-100 p-2 mt-2 rounded w-full text-center">
-              <Typography color="black" variant="h6">
-                {certificateHash}{' '}
-                <i className="fas fa-copy cursor-pointer ml-1" />
-              </Typography>
-            </div>
-            <p className="text-gray-600 mt-6 w-full">
-              You can also view the file on IPFS using the link below:
-            </p>
-            <div className="bg-gray-100 p-2 mt-2 rounded w-full">
-              <Tooltip content={`https://ipfs.io/ipfs/${ipfsHash}`}>
-                <Typography color="blue" variant="h6">
-                  <a
-                    href={`https://ipfs.io/ipfs/${ipfsHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      display: 'block',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    {`https://ipfs.io/ipfs/${ipfsHash}`}
-                  </a>
-                </Typography>
-              </Tooltip>
-            </div>
           </div>
         </DialogBody>
         <DialogFooter>
@@ -318,4 +260,4 @@ const IssueCertificates = () => {
   );
 };
 
-export default IssueCertificates;
+export default IssueRequest;

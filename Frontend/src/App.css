@@ -1,3 +1,8 @@
 body {
     background-color: #f5f6f7;
 }
+
+.copy-icon:hover {
+    cursor: pointer;
+    color: #37474f
+}
