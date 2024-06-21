@@ -13,11 +13,13 @@ import {
   DialogFooter,
 } from '@material-tailwind/react';
 import { useParams } from 'react-router-dom';
-
+import detectEthereumProvider from '@metamask/detect-provider';
 const RevokeCertificate = () => {
   const { address } = useParams();
   const [curInst, setCurInst] = useState('uit');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isChecked, setIsChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [certPubKey, setCertPubKey] = useState(address || '');
   const [showAlert, setShowAlert] = useState({
@@ -96,17 +98,69 @@ const RevokeCertificate = () => {
     }
   };
 
-  const handleConfirm = () => {
+  const openModal = () => {
+      if (isChecked) {
+      if (gasFee === 0) {
+        setIsLoading(true); // Hiển thị spinner
+
+        setTimeout(() => {
+          setIsLoading(false); // Ẩn spinner
+          setGasFee(
+            selectedFile
+              ? ((selectedFile.size / (1024 * 1024)) * 0.01).toFixed(5)
+              : 0
+          );
+          setShowModal(true);
+        }, 3000);
+      } else {
+        setShowModal(true);
+      }
+    } else {
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
+    }
+  };
+
+  const handleConfirm = async () => {
     setIsConfirmLoading(true);
-    setTimeout(() => {
+    const provider = await detectEthereumProvider();
+
+    if (provider) {
+      try {
+        const accounts = await provider.request({
+          method: 'eth_requestAccounts',
+        });
+        const transactionParameters = {
+          to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
+          from: accounts[0],
+          value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
+          data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
+        };
+
+        const txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [transactionParameters],
+        });
+
+        console.log('Transaction sent:', txHash);
+        // openModal();
+        setTimeout(() => {
+        setIsConfirmLoading(false);
+        window.location.href = '/pending';
+      }, 1000);
+      } catch (error) {
+        console.error('Transaction failed:', error);
+        setIsConfirmLoading(false);
+      }
+    } else {
+      console.error('Please install MetaMask!');
       setIsConfirmLoading(false);
-      window.location.href = '/pending';
-    }, 2000);
+    }
   };
 
   const handleFraudContinue = () => {
     setShowFraudModal(false);
-    setShowModal(true); // Show the confirmation modal
+    handleConfirm();
   };
 
   const handleFraudCancel = () => {
@@ -158,7 +212,7 @@ const RevokeCertificate = () => {
                   color="blue-gray"
                   className="font-normal pl-2"
                 >
-                  Cisco Certified Network Associate
+                  TOEIC OFFICIAL SCORE CERTIFICATE
                 </Typography>
               </div>
             )}
@@ -233,7 +287,7 @@ const RevokeCertificate = () => {
           </p>
           <p className="text-black">
             Holder from address{' '}
-            <span className="text-red-600">{certPubKey}</span> is at risk of
+            <span className="text-red-600">{"0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"}</span> is at risk of
             fraud. Are you sure you want to continue with this action? This
             could be a potential fraud attempt.
           </p>

@@ -53,7 +53,7 @@ const IssueCertificates = () => {
   const certificateHash = '0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19';
 
   const ipfsHash =
-    'bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly';
+    'Qmau5p38VtDaYBuAe4JQxxZUmP2QauLgd5A7GiwqJfBibS';
 
   const handleUploadFile = (event) => {
     const file = event.target.files[0];
