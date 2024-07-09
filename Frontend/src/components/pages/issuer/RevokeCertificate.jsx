@@ -13,11 +13,14 @@ import {
   DialogFooter,
 } from '@material-tailwind/react';
 import { useParams } from 'react-router-dom';
+import { revokeCertificate } from '../../../api/certificate.api';
 
 const RevokeCertificate = () => {
+  const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
   const { address } = useParams();
   const [curInst, setCurInst] = useState('uit');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRevokeLoading, setIsRevokeLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [certPubKey, setCertPubKey] = useState(address || '');
   const [showAlert, setShowAlert] = useState({
@@ -26,7 +29,9 @@ const RevokeCertificate = () => {
   });
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [certChecked, setCertChecked] = useState(false);
-  const validKey = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4';
+  const [holderAddress, setHolderAddress] = useState('');
+  const validKey =
+    '0x591304466179a7374e7b8218aff0da2c8efbadaf836651706bb972579a8c7a37';
   const [icon, setIcon] = useState({
     title: 'key',
     color: 'gray',
@@ -35,6 +40,8 @@ const RevokeCertificate = () => {
     (0.0001 + Math.random() * (0.001 - 0.0001)).toFixed(10)
   );
   const [showFraudModal, setShowFraudModal] = useState(false); // State for fraud detection modal
+
+  const [transactionHash, setTransactionHash] = useState('');
 
   const closeModal = () => setShowModal(false);
 
@@ -66,33 +73,47 @@ const RevokeCertificate = () => {
     }, 3000);
   };
 
-  const handleExecute = () => {
-    if (!certChecked) {
-      setShowAlert({
-        show: true,
-        message: 'Certificate public key has not been checked !',
-      });
-      setTimeout(() => {
-        setShowAlert({
-          ...showAlert,
-          show: false,
-        });
-      }, 3000);
-    } else {
-      if (!checkValid(certPubKey)) {
-        setShowAlert({
-          show: true,
-          message: 'Certificate public key is not valid !',
-        });
-        setTimeout(() => {
-          setShowAlert({
-            ...showAlert,
-            show: false,
-          });
-        }, 3000);
-      } else {
-        setShowFraudModal(true); // Show fraud detection modal
-      }
+  const handleExecute = async () => {
+    // if (!certChecked) {
+    //   setShowAlert({
+    //     show: true,
+    //     message: 'Certificate public key has not been checked !',
+    //   });
+    //   setTimeout(() => {
+    //     setShowAlert({
+    //       ...showAlert,
+    //       show: false,
+    //     });
+    //   }, 3000);
+    // } else {
+    //   if (!checkValid(certPubKey)) {
+    //     setShowAlert({
+    //       show: true,
+    //       message: 'Certificate public key is not valid !',
+    //     });
+    //     setTimeout(() => {
+    //       setShowAlert({
+    //         ...showAlert,
+    //         show: false,
+    //       });
+    //     }, 3000);
+    //   } else {
+    //     setShowFraudModal(true); // Show fraud detection modal
+    //   }
+    // }
+    const data = {
+      msgSender: accountAddress,
+      holder: holderAddress,
+      hash: certPubKey,
+    };
+
+    setIsRevokeLoading(true);
+    const response = await revokeCertificate(data);
+    console.log(response);
+    if (response.status === 'success' && response.isRevoked) {
+      setTransactionHash(response.result.hash);
+      setShowModal(true);
+      setIsRevokeLoading(false);
     }
   };
 
@@ -131,6 +152,8 @@ const RevokeCertificate = () => {
           <div className="flex flex-col gap-5 pt-5">
             <Input
               label="Holder Address"
+              value={holderAddress}
+              onChange={(event) => setHolderAddress(event.target.value)}
               icon={<i className="fas fa-user text-xs" />}
             />
             <div className="flex gap-3">
@@ -148,7 +171,7 @@ const RevokeCertificate = () => {
                 {isLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
               </Button>
             </div>
-            {certChecked && (
+            {/* {certChecked && (
               <div className="flex px-2 items-center">
                 <div>
                   <i className="fas fa-file-pdf text-red-500 mr-1"></i>
@@ -161,11 +184,11 @@ const RevokeCertificate = () => {
                   Cisco Certified Network Associate
                 </Typography>
               </div>
-            )}
+            )} */}
             <Textarea label="Why Revoke ?" />
             <div className="flex justify-end">
               <Button color="red" onClick={handleExecute}>
-                Execute
+                {isRevokeLoading ? <Spinner className="h-4 w-4" /> : 'Execute'}
               </Button>
               <div
                 className={`fixed inset-0 flex items-start justify-end m-5 ${
@@ -195,32 +218,24 @@ const RevokeCertificate = () => {
         </Card>
       </div>
       <Dialog open={showModal} handler={closeModal}>
-        <DialogHeader>Your attention is required!</DialogHeader>
+        <DialogHeader>Revoke success !</DialogHeader>
         <DialogBody divider>
           <div className="flex flex-col items-center mb-3">
             <i className="fab fa-ethereum text-[60px] text-blue-gray-800 mr-2"></i>
             <Typography color="black" variant="h5" className="py-3">
-              Your revocation request costs{' '}
-              <span className="text-red-500">{gasFee} ETH</span> to execute !
+              Your certificate has been revoked, it will no longer be valid.
             </Typography>
-            <p className="text-gray-600">
-              Once you have revoked this certificate, it will become{' '}
-              <span className="font-bold">invalid</span>, and you will no longer
-              be able to use it
-            </p>
+            <div className="text-black">
+              Transaction hash:{' '}
+              <a href={`https://sepolia.arbiscan.io/tx/${transactionHash}`}>
+                <span className="text-blue-700">{transactionHash}</span>
+              </a>
+            </div>
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button
-            variant="text"
-            color="red"
-            onClick={closeModal}
-            className="mr-1"
-          >
-            <span>Cancel</span>
-          </Button>
-          <Button variant="gradient" onClick={handleConfirm}>
-            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Confirm'}
+          <Button variant="gradient" onClick={closeModal} className="mr-1">
+            <span>Close</span>
           </Button>
         </DialogFooter>
       </Dialog>

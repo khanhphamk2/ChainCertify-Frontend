@@ -291,7 +291,7 @@ const ShareCertificate = () => {
                 </Typography>
               </div>
             )}
-
+  
             <div className="flex justify-end">
               <Button color="amber" onClick={handleExecute}>
                 Execute

@@ -17,8 +17,11 @@ import {
   Tooltip,
 } from '@material-tailwind/react';
 import DatePicker from './controls/DatePicker';
+import moment from 'moment';
 import detectEthereumProvider from '@metamask/detect-provider';
+import { issueCertificate } from '../../api/certificate.api';
 const IssueCertificates = () => {
+  const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
   const [selectedFile, setSelectedFile] = useState(null);
   const [gasFee, setGasFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -27,6 +30,18 @@ const IssueCertificates = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [curInst, setCurInst] = useState('uit');
+  const [holderName, setHolderName] = useState('');
+  const [identityNumber, setIdentityNumber] = useState('');
+  const [holderAddress, setHolderAddress] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [certificateType, setCertificateType] = useState('');
+  const [score, setScore] = useState(0);
+  const [note, setNote] = useState('');
+  const [expireDate, setExpiredDate] = useState(
+    moment().format('DD/MM/YYYY').toString()
+  );
+  const [certificateHash, setCertificateHash] = useState('');
+
   const certificateTypes = [
     {
       institution: 'uit',
@@ -50,10 +65,7 @@ const IssueCertificates = () => {
     },
   ];
 
-  const certificateHash = '0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19';
-
-  const ipfsHash =
-    'bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly';
+  const [ipfsLink, setIpfsLink] = useState('');
 
   const handleUploadFile = (event) => {
     const file = event.target.files[0];
@@ -90,36 +102,59 @@ const IssueCertificates = () => {
   const closeModal = () => setShowModal(false);
 
   const handleConfirm = async () => {
-    setIsConfirmLoading(true);
-    const provider = await detectEthereumProvider();
+    // setIsConfirmLoading(true);
+    // const provider = await detectEthereumProvider();
 
-    if (provider) {
-      try {
-        const accounts = await provider.request({
-          method: 'eth_requestAccounts',
-        });
-        const transactionParameters = {
-          to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
-          from: accounts[0],
-          value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
-          data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
-        };
+    // if (provider) {
+    //   try {
+    //     const accounts = await provider.request({
+    //       method: 'eth_requestAccounts',
+    //     });
+    //     const transactionParameters = {
+    //       to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
+    //       from: accounts[0],
+    //       value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
+    //       data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
+    //     };
 
-        const txHash = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [transactionParameters],
-        });
+    //     const txHash = await provider.request({
+    //       method: 'eth_sendTransaction',
+    //       params: [transactionParameters],
+    //     });
 
-        console.log('Transaction sent:', txHash);
-        setIsConfirmLoading(false);
-        openModal();
-      } catch (error) {
-        console.error('Transaction failed:', error);
-        setIsConfirmLoading(false);
-      }
-    } else {
-      console.error('Please install MetaMask!');
-      setIsConfirmLoading(false);
+    //     console.log('Transaction sent:', txHash);
+    //     setIsConfirmLoading(false);
+    //     openModal();
+    //   } catch (error) {
+    //     console.error('Transaction failed:', error);
+    //     setIsConfirmLoading(false);
+    //   }
+    // } else {
+    //   console.error('Please install MetaMask!');
+    //   setIsConfirmLoading(false);
+    // }
+    const data = {
+      name: holderName,
+      identityNumber,
+      holder: holderAddress,
+      institution,
+      type: certificateType,
+      score: parseInt(score),
+      note,
+      expireDate,
+      msgSender: accountAddress,
+    };
+
+    setIsLoading(true);
+    const response = await issueCertificate(data, selectedFile);
+    setIsLoading(false);
+    if (
+      response.certificate.status === 'success' &&
+      response.certificate.certificateHash
+    ) {
+      setCertificateHash(response.certificate.certificateHash);
+      setIpfsLink(response.certificate.ipfs);
+      setShowModal(true);
     }
   };
 
@@ -150,21 +185,32 @@ const IssueCertificates = () => {
               <Input
                 label="Holder Name"
                 icon={<i className="fas fa-user text-xs" />}
+                value={holderName}
+                onChange={(e) => setHolderName(e.target.value)}
               />
               <Input
-                label="Indentity Number"
+                label="Identity Number"
                 icon={<i className="fas fa-address-card text-xs" />}
+                value={identityNumber}
+                onChange={(e) => setIdentityNumber(e.target.value)}
               />
               <Input
                 label="Holder Address"
                 icon={<i className="fas fa-hashtag text-xs" />}
+                value={holderAddress}
+                onChange={(e) => setHolderAddress(e.target.value)}
               />
-              <Select label="Institution" onChange={handleSelectInstitution}>
+              <Select label="Institution" onChange={(e) => setInstitution(e)}>
                 {certificateTypes.map((item, index) => (
-                  <Option value={item.institution}>{item.name}</Option>
+                  <Option key={index} value={item.institution}>
+                    {item.name}
+                  </Option>
                 ))}
               </Select>
-              <Select label="Certificate Type">
+              <Select
+                label="Certificate Type"
+                onChange={(e) => setCertificateType(e)}
+              >
                 {certificateTypes
                   .find((item) => item.institution === curInst)
                   ?.types.map((type, index) => (
@@ -176,11 +222,15 @@ const IssueCertificates = () => {
               <Input
                 label="Score"
                 icon={<i className="fas fa-star text-xs" />}
+                value={score}
+                onChange={(e) => setScore(e.target.value)}
               />
-              <div>
-                <DatePicker />
-              </div>
-              <Textarea label="Note" />
+              <DatePicker selectedDate={expireDate} onChange={setExpiredDate} />
+              <Textarea
+                label="Note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
             </div>
           </Card>
           <Card
@@ -287,10 +337,10 @@ const IssueCertificates = () => {
               You can also view the file on IPFS using the link below:
             </p>
             <div className="bg-gray-100 p-2 mt-2 rounded w-full">
-              <Tooltip content={`https://ipfs.io/ipfs/${ipfsHash}`}>
+              <Tooltip content={ipfsLink}>
                 <Typography color="blue" variant="h6">
                   <a
-                    href={`https://ipfs.io/ipfs/${ipfsHash}`}
+                    href={ipfsLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -301,7 +351,7 @@ const IssueCertificates = () => {
                       maxWidth: '100%',
                     }}
                   >
-                    {`https://ipfs.io/ipfs/${ipfsHash}`}
+                    {ipfsLink}
                   </a>
                 </Typography>
               </Tooltip>
