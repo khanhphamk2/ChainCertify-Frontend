@@ -14,6 +14,7 @@ import {
 } from '@material-tailwind/react';
 import { useParams } from 'react-router-dom';
 import { revokeCertificate } from '../../../api/certificate.api';
+import { detectFraud } from '../../../api/fraudDetection.api';
 
 const RevokeCertificate = () => {
   const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
@@ -40,6 +41,8 @@ const RevokeCertificate = () => {
     (0.0001 + Math.random() * (0.001 - 0.0001)).toFixed(10)
   );
   const [showFraudModal, setShowFraudModal] = useState(false); // State for fraud detection modal
+
+  const [showErrorModal, setShowErrorModal] = useState(false); // State for error modal
 
   const [transactionHash, setTransactionHash] = useState('');
 
@@ -101,36 +104,42 @@ const RevokeCertificate = () => {
     //     setShowFraudModal(true); // Show fraud detection modal
     //   }
     // }
-    const data = {
-      msgSender: accountAddress,
-      holder: holderAddress,
-      hash: certPubKey,
-    };
 
     setIsRevokeLoading(true);
-    const response = await revokeCertificate(data);
-    console.log(response);
-    if (response.status === 'success' && response.isRevoked) {
-      setTransactionHash(response.result.hash);
-      setShowModal(true);
+
+    const isSafe = Boolean((await detectFraud(holderAddress)).safe);
+
+    if (isSafe) {
+      await executeRevocation();
+    } else {
+      setShowFraudModal(true);
       setIsRevokeLoading(false);
     }
   };
 
-  const handleConfirm = () => {
+  const executeRevocation = async () => {
+    try {
+      const data = {
+        msgSender: accountAddress,
+        holder: holderAddress,
+        hash: certPubKey,
+      };
+      const response = await revokeCertificate(data);
+      if (response.status === 'success' && response.isRevoked) {
+        setTransactionHash(response.result.hash);
+        setShowModal(true);
+        setIsRevokeLoading(false);
+      }
+    } catch (error) {
+      console.error('Error revoking certificate:', error);
+      setShowErrorModal(true);
+      setIsRevokeLoading(false);
+    }
+  };
+
+  const handleFraudContinue = async () => {
     setIsConfirmLoading(true);
-    setTimeout(() => {
-      setIsConfirmLoading(false);
-      window.location.href = '/pending';
-    }, 2000);
-  };
-
-  const handleFraudContinue = () => {
-    setShowFraudModal(false);
-    setShowModal(true); // Show the confirmation modal
-  };
-
-  const handleFraudCancel = () => {
+    await executeRevocation();
     setShowFraudModal(false);
   };
 
@@ -167,9 +176,6 @@ const RevokeCertificate = () => {
                 onChange={(event) => setCertPubKey(event.target.value)}
                 value={certPubKey}
               />
-              <Button onClick={handleCheck}>
-                {isLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
-              </Button>
             </div>
             {/* {certChecked && (
               <div className="flex px-2 items-center">
@@ -227,7 +233,10 @@ const RevokeCertificate = () => {
             </Typography>
             <div className="text-black">
               Transaction hash:{' '}
-              <a href={`https://sepolia.arbiscan.io/tx/${transactionHash}`}>
+              <a
+                href={`https://sepolia.arbiscan.io/tx/${transactionHash}`}
+                target="_blank"
+              >
                 <span className="text-blue-700">{transactionHash}</span>
               </a>
             </div>
@@ -239,7 +248,7 @@ const RevokeCertificate = () => {
           </Button>
         </DialogFooter>
       </Dialog>
-      <Dialog open={showFraudModal} handler={handleFraudCancel}>
+      <Dialog open={showFraudModal} handler={() => setShowFraudModal(false)}>
         <DialogHeader>Fraud Detection Warning</DialogHeader>
         <DialogBody divider>
           <p className="text-center mb-3">
@@ -248,7 +257,7 @@ const RevokeCertificate = () => {
           </p>
           <p className="text-black">
             Holder from address{' '}
-            <span className="text-red-600">{certPubKey}</span> is at risk of
+            <span className="text-red-600">{holderAddress}</span> is at risk of
             fraud. Are you sure you want to continue with this action? This
             could be a potential fraud attempt.
           </p>
@@ -257,13 +266,32 @@ const RevokeCertificate = () => {
           <Button
             variant="text"
             color="red"
-            onClick={handleFraudCancel}
+            onClick={() => setShowFraudModal(false)}
             className="mr-1"
           >
             <span>Cancel</span>
           </Button>
           <Button variant="gradient" onClick={handleFraudContinue}>
-            Continue
+            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+      <Dialog open={showErrorModal} handler={() => setShowErrorModal(false)}>
+        <DialogHeader>Error</DialogHeader>
+        <DialogBody divider>
+          <p className="text-center mb-3">
+            {' '}
+            <i className="fas fa-exclamation-circle  text-[60px] text-red-700 mr-2"></i>
+          </p>
+          <p className="text-black">
+            The certificate with hash{' '}
+            <span className="text-red-700">{certPubKey}</span> is not valid.
+            Please check the certificate hash again.
+          </p>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="gradient" onClick={() => setShowErrorModal(false)}>
+            OK
           </Button>
         </DialogFooter>
       </Dialog>

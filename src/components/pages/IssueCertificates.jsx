@@ -19,7 +19,7 @@ import {
 import DatePicker from './controls/DatePicker';
 import moment from 'moment';
 import detectEthereumProvider from '@metamask/detect-provider';
-import { issueCertificate } from '../../api/certificate.api';
+import { issueCertificate, getFileInfo } from '../../api/certificate.api';
 const IssueCertificates = () => {
   const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
   const [selectedFile, setSelectedFile] = useState(null);
@@ -101,6 +101,17 @@ const IssueCertificates = () => {
 
   const closeModal = () => setShowModal(false);
 
+  const getPreviewFileUrl = async (ipfsUrl) => {
+    const { pdf } = await getFileInfo(ipfsUrl);
+    if (pdf) {
+      const regex = /Qm[a-zA-Z0-9]+/;
+      const previewFileUrl = ipfsUrl.replace(regex, pdf);
+      console.log(previewFileUrl);
+      return previewFileUrl;
+    }
+    return '';
+  };
+
   const handleConfirm = async () => {
     // setIsConfirmLoading(true);
     // const provider = await detectEthereumProvider();
@@ -153,7 +164,8 @@ const IssueCertificates = () => {
       response.certificate.certificateHash
     ) {
       setCertificateHash(response.certificate.certificateHash);
-      setIpfsLink(response.certificate.ipfs);
+      const ipfsUrl = await getPreviewFileUrl(response.certificate.ipfs);
+      setIpfsLink(ipfsUrl);
       setShowModal(true);
     }
   };

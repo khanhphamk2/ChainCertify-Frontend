@@ -26,3 +26,12 @@ export const revokeCertificate = async (data) => {
     throw error;
   }
 };
+
+export const getFileInfo = async (ipfsUrl) => {
+  try {
+    const response = await axios.get(ipfsUrl);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
