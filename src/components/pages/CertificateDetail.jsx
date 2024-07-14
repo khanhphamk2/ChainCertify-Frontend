@@ -1,8 +1,37 @@
 import { Typography } from '@material-tailwind/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getFileInfo, getFile } from '../../api/certificate.api';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
-const CertificateDetail = ({ pdfUrl }) => {
+const CertificateDetail = () => {
+  const ipfsLink =
+    'https://black-delicate-hamster-859.mypinata.cloud/ipfs/QmbTo9FCw37kbZuYFtUbZuY4j1pVhjQ2kQ4KaQZcSbiR4Z?pinataGatewayToken=9TtgncTJIzdzv_ieLJA3Uulkt--VHz6BNjRkJU1h2mw1SB_aK6v8UN0itzHBsAVY';
+  const [pdf, setPdf] = useState(null);
+  useEffect(() => {
+    try {
+      const getPreviewFileUrl = async (ipfsUrl) => {
+        const { pdf } = await getFileInfo(ipfsUrl);
+        if (pdf) {
+          const regex = /Qm[a-zA-Z0-9]+/;
+          const previewFileUrl = ipfsUrl.replace(regex, pdf);
+          console.log(previewFileUrl);
+          return previewFileUrl;
+        }
+        return '';
+      };
+
+      const fetchFile = async () => {
+        const ipfsUrl = await getPreviewFileUrl(ipfsLink);
+        const pdfFile = await getFile(ipfsUrl);
+        console.log(pdfFile);
+        setPdf(URL.createObjectURL(pdfFile));
+      };
+
+      fetchFile();
+    } catch (error) {
+      throw error;
+    }
+  }, []);
   return (
     <div className="m-7 w-4/5">
       <div className="flex flex-col gap-1">
@@ -16,7 +45,7 @@ const CertificateDetail = ({ pdfUrl }) => {
         </Typography>
       </div>
       <div className="my-3">
-        <object class="pdf" data={pdfUrl} width="100%" height="800px"></object>
+        <object class="pdf" data={pdf} width="100%" height="800px"></object>
       </div>
     </div>
   );

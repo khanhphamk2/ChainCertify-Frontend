@@ -9,7 +9,6 @@ import ShareCertificate from './components/pages/ShareCertificate';
 import PendingVerify from './components/pages/PendingVerify';
 import CertificateDetail from './components/pages/CertificateDetail';
 import LoginPage from './components/pages/LoginPage';
-import pdfUrl from './assets/pdf/toeic.pdf';
 import PendingRequests from './components/pages/issuer/PendingRequests';
 import RevokeCertificate from './components/pages/issuer/RevokeCertificate';
 import IssuerDashboard from './components/pages/issuer/IssuerDashboard';
@@ -40,10 +39,7 @@ function App() {
           <Route path="/issue-request" element={<IssueRequest />} />
           <Route path="/pending" element={<PendingVerify />} />
           <Route path="/requests" element={<PendingRequests />} />
-          <Route
-            path="/get/:address"
-            element={<CertificateDetail pdfUrl={pdfUrl} />}
-          />
+          <Route path="/get/:address" element={<CertificateDetail />} />
         </Routes>
       </div>
     </div>

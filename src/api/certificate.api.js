@@ -35,3 +35,28 @@ export const getFileInfo = async (ipfsUrl) => {
     throw error;
   }
 };
+
+export const getFile = async (ipfsUrl) => {
+  try {
+    const response = await axios.get(ipfsUrl, {
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getCertificate = async (certificateHash, holder, issuer) => {
+  try {
+    const response = await axios.get(`${baseUrl}/${certificateHash}`, {
+      params: {
+        holder,
+        issuer,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
