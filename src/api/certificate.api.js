@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-const baseUrl = 'http://localhost:3000/v1/credential/address';
+const baseUrl = 'http://localhost:3000/v1/credential';
 
 export const issueCertificate = async (data, file) => {
   try {
     const formData = new FormData();
     formData.append('jsonData', JSON.stringify(data));
     formData.append('pdfFile', file);
-    const response = await axios.post(baseUrl, formData, {
+    const response = await axios.post(`${baseUrl}/address`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -18,9 +18,9 @@ export const issueCertificate = async (data, file) => {
   }
 };
 
-export const revokeCertificate = async (data) => {
+export const revokeCertificate = async (certHash, data) => {
   try {
-    const response = await axios.put(`${baseUrl}/revoke`, data);
+    const response = await axios.put(`${baseUrl}/address/${certHash}`, data);
     return response.data;
   } catch (error) {
     throw error;
@@ -49,12 +49,21 @@ export const getFile = async (ipfsUrl) => {
 
 export const getCertificate = async (certificateHash, holder, issuer) => {
   try {
-    const response = await axios.get(`${baseUrl}/${certificateHash}`, {
+    const response = await axios.get(`${baseUrl}/address/${certificateHash}`, {
       params: {
         holder,
         issuer,
       },
     });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getCertificatesList = async (address) => {
+  try {
+    const response = await axios.get(`${baseUrl}/${address}`);
     return response.data;
   } catch (error) {
     throw error;

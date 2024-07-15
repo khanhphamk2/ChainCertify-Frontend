@@ -14,9 +14,11 @@ import {
   Spinner,
   IconButton,
 } from '@material-tailwind/react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Ipfs from '../../assets/icons/ipfs.svg';
 import Mongodb from '../../assets/icons/mongodb.svg';
+import { getCertificatesList } from '../../api/certificate.api';
+import moment from 'moment';
 
 const TABLE_ROWS = [
   {
@@ -60,16 +62,33 @@ function GetCertificates() {
   const [refreshKey, setRefreshKey] = useState(0); // Thêm state key duy nhất
   const gasFee = 0.0001 + Math.random() * (0.001 - 0.0001);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const fetchedData = localStorage.getItem('fetchedData');
-    if (fetchedData) {
-      setDataFetched(true);
-      setTableRows(JSON.parse(fetchedData));
-    } else {
-      setDataFetched(true);
-      localStorage.setItem('fetchedData', JSON.stringify(tableRows));
-      setRefreshKey(refreshKey + 1);
-    }
+    // const fetchedData = localStorage.getItem('fetchedData');
+    // if (fetchedData) {
+    //   setDataFetched(true);
+    //   setTableRows(JSON.parse(fetchedData));
+    // } else {
+    //   setDataFetched(true);
+    //   localStorage.setItem('fetchedData', JSON.stringify(tableRows));
+    //   setRefreshKey(refreshKey + 1);
+    // }
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getCertificatesList(
+          '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'
+        );
+        setTableRows(data.result);
+        setDataFetched(true);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   const removeRow = (index) => {
@@ -105,77 +124,81 @@ function GetCertificates() {
             className="h-full w-[90%] mt-10 overflow-hidden animate__animated animate__fadeInUp"
           >
             <table className="w-full min-w-max table-auto text-left">
-              <tbody>
-                {dataFetched ? (
-                  tableRows.map(
-                    ({ name, address, uploadedAt, size }, index) => {
-                      const isLast = index === TABLE_ROWS.length - 1;
-                      const classes =
-                        (isLast ? 'p-4' : 'p-4 border-b border-blue-gray-50') +
-                        ` flex items-center hover:bg-gray-200 cursor-pointer px-5`;
+              <tbody className={isLoading ? 'p-5 flex justify-center' : ''}>
+                {!isLoading ? (
+                  tableRows.length > 0 ? (
+                    tableRows.map(
+                      ({ ipfsHash, certHash, issueDate }, index) => {
+                        const isLast = index === TABLE_ROWS.length - 1;
+                        const classes =
+                          (isLast
+                            ? 'p-4'
+                            : 'p-4 border-b border-blue-gray-50') +
+                          ` flex items-center hover:bg-gray-200 cursor-pointer px-5`;
 
-                      return (
-                        <tr
-                          key={index}
-                          onClick={() => {
-                            window.location.href = '/get/' + address;
-                          }}
-                        >
-                          <td className={classes}>
-                            <div className="mr-2">
-                              <i className="fas fa-file-pdf text-red-500 mr-1"></i>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <Typography
-                                variant="h6"
-                                color="blue-gray"
-                                className="font-normal pl-2"
-                              >
-                                {name}
-                                <span className="text-gray-500 text-sm mx-3">
-                                  {address}
-                                </span>
-                                <i className="fas fa-copy text-gray-500 copy-icon" />
-                              </Typography>
-                              <Typography
-                                variant="small"
-                                color="indigo"
-                                className="text-xs pl-2"
-                              >
-                                {`Size: ${size} | Uploaded at: ${uploadedAt}`}
-                              </Typography>
-                            </div>
-                            <div className="ml-auto">
-                              <Menu>
-                                <MenuHandler>
-                                  <i className="fas fa-ellipsis-vertical text-gray-400 p-1"></i>
-                                </MenuHandler>
-                                <MenuList>
-                                  <MenuItem className="flex flex-row">
-                                    <Link
-                                      to={`/share/${address}`}
-                                      className="flex flex-row"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <div className="my-auto">
-                                        <i className="fas fa-share text-blue-gray-500 mr-1"></i>
-                                      </div>
-                                      <Typography
-                                        variant="small"
-                                        color="blue-gray-500"
-                                        className="font-normal pl-2"
+                        return (
+                          <tr
+                            key={index}
+                            onClick={() => {
+                              navigate('/get/' + certHash, {
+                                state: { ipfsHash, certHash, issueDate },
+                              });
+                            }}
+                          >
+                            <td className={classes}>
+                              <div className="mr-2">
+                                <i className="fas fa-file-pdf text-red-500 mr-1"></i>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <Typography
+                                  variant="h6"
+                                  color="blue-gray"
+                                  className="font-normal pl-2"
+                                >
+                                  {ipfsHash}
+                                  <div>
+                                    <span className="text-gray-500 text-sm mr-1">
+                                      {certHash}
+                                    </span>
+                                    <i className="fas fa-copy text-gray-500 copy-icon" />
+                                  </div>
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  color="indigo"
+                                  className="text-xs pl-2"
+                                >
+                                  {`Issued at: ${moment(issueDate).format(
+                                    'YYYY/MM/DD HH:mm'
+                                  )}`}
+                                </Typography>
+                              </div>
+                              <div className="ml-auto">
+                                <Menu>
+                                  <MenuHandler>
+                                    <i className="fas fa-ellipsis-vertical text-gray-400 p-1"></i>
+                                  </MenuHandler>
+                                  <MenuList>
+                                    <MenuItem className="flex flex-row">
+                                      <Link
+                                        to={`/share/${certHash}`}
+                                        className="flex flex-row"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        Share
-                                      </Typography>
-                                    </Link>
-                                  </MenuItem>
+                                        <div className="my-auto">
+                                          <i className="fas fa-share text-blue-gray-500 mr-1"></i>
+                                        </div>
+                                        <Typography
+                                          variant="small"
+                                          color="blue-gray-500"
+                                          className="font-normal pl-2"
+                                        >
+                                          Share
+                                        </Typography>
+                                      </Link>
+                                    </MenuItem>
 
-                                  <MenuItem className="flex flex-row">
-                                    <Link
-                                      to={`/revoke/${address}`}
-                                      className="flex flex-row"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <MenuItem className="flex flex-row">
                                       <div className="my-auto">
                                         <i className="fas fa-rotate-left text-red-500 mr-1"></i>
                                       </div>
@@ -186,22 +209,24 @@ function GetCertificates() {
                                       >
                                         Revoke
                                       </Typography>
-                                    </Link>
-                                  </MenuItem>
-                                </MenuList>
-                              </Menu>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
+                                    </MenuItem>
+                                  </MenuList>
+                                </Menu>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )
+                  ) : (
+                    <tr>
+                      <td className="p-4">
+                        <Typography>No certificates fetched</Typography>
+                      </td>
+                    </tr>
                   )
                 ) : (
-                  <tr>
-                    <td className="p-4">
-                      <Typography>No certificates fetched</Typography>
-                    </td>
-                  </tr>
+                  <Spinner className="h-6 w-6" />
                 )}
               </tbody>
             </table>
