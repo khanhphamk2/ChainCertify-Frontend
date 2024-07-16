@@ -17,15 +17,23 @@ import {
   Tooltip,
 } from '@material-tailwind/react';
 import DatePicker from './controls/DatePicker';
+import { issueRequest } from '../../api/request.api';
+import moment from 'moment';
 const IssueRequest = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [gasFee, setGasFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [curInst, setCurInst] = useState('uit');
+  const [requestForm, setRequestForm] = useState({
+    name: '',
+    identityNumber: '',
+    institution: 'uit',
+    address: localStorage.getItem('walletAddress'),
+    type: '',
+    score: 0,
+    expireDate: moment().format('YYYY/MM/DD').toString(),
+  });
   const certificateTypes = [
     {
       institution: 'uit',
@@ -49,51 +57,32 @@ const IssueRequest = () => {
     },
   ];
 
-  const certificateHash = '0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19';
-
-  const ipfsHash =
-    'bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly';
-
   const handleUploadFile = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
   };
 
-  const handleSelectInstitution = (event) => {
-    setCurInst(event);
-  };
-
-  const openModal = () => {
-    if (isChecked) {
-      if (gasFee === 0) {
-        setIsLoading(true); // Hiển thị spinner
-
-        setTimeout(() => {
-          setIsLoading(false); // Ẩn spinner
-          setGasFee(
-            selectedFile
-              ? ((selectedFile.size / (1024 * 1024)) * 0.01).toFixed(5)
-              : 0
-          );
-          setShowModal(true);
-        }, 3000);
-      } else {
-        setShowModal(true);
-      }
-    } else {
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 5000);
-    }
-  };
-
-  const closeModal = () => setShowModal(false);
-
-  const handleConfirm = () => {
-    setIsConfirmLoading(true);
+  const handleRequest = async () => {
+    setIsLoading(true);
+    await issueRequest(requestForm, selectedFile);
     setTimeout(() => {
-      setIsConfirmLoading(false);
-      window.location.href = '/pending';
+      setIsLoading(false);
+      setShowModal(true);
     }, 2000);
+  };
+
+  const closeModal = () => {
+    setRequestForm({
+      name: '',
+      identityNumber: '',
+      institution: 'uit',
+      address: localStorage.getItem('walletAddress'),
+      type: '',
+      score: 0,
+      expireDate: moment().format('YYYY/MM/DD').toString(),
+    });
+    setShowModal(false);
+    window.location.href = '/';
   };
 
   return (
@@ -111,34 +100,51 @@ const IssueRequest = () => {
               <Typography color="gray" className="font-normal">
                 Fulfill all information below
               </Typography>
-              <Button size="sm" color="blue" className="my-4 mb-2">
-                Import from profile
-              </Button>
             </div>
             <div className="flex flex-col gap-5 pt-5">
               <Input
                 label="Holder Name"
                 icon={<i className="fas fa-user text-xs" />}
-                value={'Nguyen Van A'}
+                onChange={(e) =>
+                  setRequestForm({ ...requestForm, name: e.target.value })
+                }
+                value={requestForm.name}
               />
               <Input
                 label="Indentity Number"
                 icon={<i className="fas fa-address-card text-xs" />}
-                value={'052298846445'}
+                onChange={(e) =>
+                  setRequestForm({
+                    ...requestForm,
+                    identityNumber: e.target.value,
+                  })
+                }
+                value={requestForm.identityNumber}
               />
-              <Input
-                label="Holder Address"
-                icon={<i className="fas fa-hashtag text-xs" />}
-                value={'0x59d18B315ac0fE0C5Ed1e256D34E043fc2b1ED19'}
-              />
-              <Select label="Institution" onChange={handleSelectInstitution}>
+              <Select
+                label="Institution"
+                onChange={(e) => {
+                  setRequestForm({
+                    ...requestForm,
+                    institution: e,
+                  });
+                }}
+              >
                 {certificateTypes.map((item, index) => (
                   <Option value={item.institution}>{item.name}</Option>
                 ))}
               </Select>
-              <Select label="Certificate Type">
+              <Select
+                label="Certificate Type"
+                onChange={(e) => {
+                  setRequestForm({
+                    ...requestForm,
+                    type: e,
+                  });
+                }}
+              >
                 {certificateTypes
-                  .find((item) => item.institution === curInst)
+                  .find((item) => item.institution === requestForm.institution)
                   ?.types.map((type, index) => (
                     <Option key={index} value={type}>
                       {type}
@@ -147,12 +153,23 @@ const IssueRequest = () => {
               </Select>
               <Input
                 label="Score"
+                value={requestForm.score}
+                onChange={(e) => {
+                  setRequestForm({
+                    ...requestForm,
+                    score: parseInt(e.target.value) || 0,
+                  });
+                }}
                 icon={<i className="fas fa-star text-xs" />}
               />
               <div>
-                <DatePicker />
+                <DatePicker
+                  selectedDate={requestForm.expireDate}
+                  onChange={(e) =>
+                    setRequestForm({ ...requestForm, expireDate: e })
+                  }
+                />
               </div>
-              <Textarea label="Note" />
             </div>
           </Card>
           <Card
@@ -230,8 +247,8 @@ const IssueRequest = () => {
                 You have to agree with our terms and conditions.
               </Alert>
             </div>
-            <Button color="blue" className="m-2" onClick={openModal}>
-              {isLoading ? <Spinner className="h-4 w-4" /> : 'Execute'}
+            <Button color="blue" className="m-2" onClick={handleRequest}>
+              {isLoading ? <Spinner className="h-4 w-4" /> : 'Request'}
             </Button>
           </Card>
         </div>
