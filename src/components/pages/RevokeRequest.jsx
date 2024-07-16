@@ -15,116 +15,49 @@ import {
   DialogFooter,
 } from '@material-tailwind/react';
 import { useParams } from 'react-router-dom';
+import { revokeRequest } from '../../api/request.api';
 
 const RevokeRequest = () => {
   const { address } = useParams();
-  const [curInst, setCurInst] = useState('uit');
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [certPubKey, setCertPubKey] = useState(address || '');
   const [showAlert, setShowAlert] = useState({
     show: false,
     message: '',
   });
-  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
-  const [certChecked, setCertChecked] = useState(false);
-  const validKey = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4';
-  const [icon, setIcon] = useState({
-    title: 'key',
-    color: 'gray',
+  const [requestForm, setRequestForm] = useState({
+    address: localStorage.getItem('walletAddress'),
+    certHash: '',
+    reason: '',
   });
-  const [gasFee, setGasFee] = useState(
-    (0.0001 + Math.random() * (0.001 - 0.0001)).toFixed(10)
-  );
-  const certificateTypes = [
-    {
-      institution: 'uit',
-      name: 'UIT - University Of Information Technology',
-      types: [
-        "Associate's Degree",
-        "Bachelor's Degree",
-        "Master's Degree",
-        'Doctoral Degree',
-        'Professional Degrees',
-      ],
-    },
-    {
-      institution: 'iig',
-      name: 'IIG Vietnam',
-      types: [
-        'TOEIC Listening & Reading',
-        'TOEIC Speaking & Writing',
-        'TOEIC Bridge',
-      ],
-    },
-  ];
 
-  const closeModal = () => setShowModal(false);
-
-  const handleSelectInstitution = (event) => {
-    setCurInst(event);
-  };
-
-  const checkValid = (pubKey) => {
-    return pubKey === validKey;
-  };
-
-  const handleCheck = () => {
-    setIsLoading(true); // Hiển thị spinner
-
-    setTimeout(() => {
-      if (checkValid(certPubKey)) {
-        setIcon({
-          title: 'check',
-          color: 'green',
-        });
-      } else {
-        setIcon({
-          title: 'xmark',
-          color: 'red',
-        });
-      }
-      setCertChecked(true);
-      setIsLoading(false); // Ẩn spinner
-    }, 3000);
-  };
-
-  const handleExecute = () => {
-    if (!certChecked) {
-      setShowAlert({
-        show: true,
-        message: 'Certificate public key has not been checked !',
-      });
-      setTimeout(() => {
-        setShowAlert({
-          ...showAlert,
-          show: false,
-        });
-      }, 3000);
-    } else {
-      if (!checkValid(certPubKey)) {
+  const handleRequest = async () => {
+    setIsLoading(true);
+    revokeRequest(requestForm)
+      .then((res) => {
+        setTimeout(() => {
+          setShowModal(true);
+          setIsLoading(false);
+        }, 1500);
+      })
+      .catch((err) => {
         setShowAlert({
           show: true,
-          message: 'Certificate public key is not valid !',
+          message: 'Request failed. Please try again',
         });
-        setTimeout(() => {
-          setShowAlert({
-            ...showAlert,
-            show: false,
-          });
-        }, 3000);
-      } else {
-        setShowModal(true);
-      }
-    }
+        setTimeout(() => setShowAlert({ show: false, message: '' }), 2000);
+        console.error(err);
+      });
   };
 
-  const handleConfirm = () => {
-    setIsConfirmLoading(true);
-    setTimeout(() => {
-      setIsConfirmLoading(false);
-      window.location.href = '/pending';
-    }, 2000);
+  const closeModal = () => {
+    setShowModal(false);
+    setRequestForm({
+      address: localStorage.getItem('walletAddress'),
+      certHash: '',
+      reason: '',
+    });
+    window.location.href = '/';
   };
 
   return (
@@ -143,36 +76,22 @@ const RevokeRequest = () => {
             <div className="flex gap-3">
               <Input
                 label="Certificate Hash"
-                icon={
-                  <i
-                    className={`fas fa-${icon.title} text-${icon.color}-500 text-xs`}
-                  />
+                onChange={(e) =>
+                  setRequestForm({ ...requestForm, certHash: e.target.value })
                 }
-                onChange={(event) => setCertPubKey(event.target.value)}
-                value={certPubKey}
+                value={requestForm.certHash}
               />
-              <Button onClick={handleCheck}>
-                {isLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
-              </Button>
             </div>
-            {checkValid(certPubKey) && certChecked && (
-              <div className="flex px-2 items-center">
-                <div>
-                  <i className="fas fa-file-pdf text-red-500 mr-1"></i>
-                </div>
-                <Typography
-                  variant="small"
-                  color="blue-gray"
-                  className="font-normal pl-2"
-                >
-                  Cisco Certified Network Associate
-                </Typography>
-              </div>
-            )}
-            <Textarea label="Why Revoke ?" />
+            <Textarea
+              label="Why Revoke ?"
+              onChange={(e) =>
+                setRequestForm({ ...requestForm, reason: e.target.value })
+              }
+              value={requestForm.reason}
+            />
             <div className="flex justify-end">
-              <Button color="red" onClick={handleExecute}>
-                Execute
+              <Button color="red" onClick={handleRequest}>
+                Request
               </Button>
               <div
                 className={`fixed inset-0 flex items-start justify-end m-5 ${
@@ -202,32 +121,22 @@ const RevokeRequest = () => {
         </Card>
       </div>
       <Dialog open={showModal} handler={closeModal}>
-        <DialogHeader>Your attention is required!</DialogHeader>
+        <DialogHeader>Request Success</DialogHeader>
         <DialogBody divider>
           <div className="flex flex-col items-center mb-3">
-            <i className="fab fa-ethereum text-[60px] text-blue-gray-800 mr-2"></i>
+            <i className="fas fa-check text-[60px] text-green-600 mr-2"></i>
             <Typography color="black" variant="h5" className="py-3">
-              Your revocation request costs{' '}
-              <span className="text-red-500">{gasFee} ETH</span> to execute !
+              Request has been successfully submitted
             </Typography>
-            <p className="text-gray-600">
-              Once you have revoked this certificate, it will become{' '}
-              <span className="font-bold">invalid</span>, and you will no longer
-              be able to use it
+            <p className="text-gray-600 px-2">
+              Your revocation request is being processed. Please wait for
+              related issuers to confirm your request.
             </p>
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button
-            variant="text"
-            color="red"
-            onClick={closeModal}
-            className="mr-1"
-          >
-            <span>Cancel</span>
-          </Button>
-          <Button variant="gradient" onClick={handleConfirm}>
-            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Confirm'}
+          <Button variant="gradient" onClick={closeModal} className="mr-1">
+            <span>Close</span>
           </Button>
         </DialogFooter>
       </Dialog>

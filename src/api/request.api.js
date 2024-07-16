@@ -17,3 +17,12 @@ export const issueRequest = async (data, file) => {
     throw error;
   }
 };
+
+export const revokeRequest = async (data) => {
+  try {
+    const response = await axios.post(`${baseUrl}/revoke`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

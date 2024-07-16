@@ -48,7 +48,7 @@ function Home() {
             className="mx-3"
             title={instance.title}
             description={instance.description}
-            button={instance.button === 'View' ? 'View (5)' : instance.button}
+            button={instance.button}
             plug={instance.plug}
           />
         ))}

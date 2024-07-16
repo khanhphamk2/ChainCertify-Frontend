@@ -262,8 +262,8 @@ const IssueRequest = () => {
               Request has been successfully submitted
             </Typography>
             <p className="text-gray-600 px-2">
-              Your issuance request is being processed. Please wait for all
-              related issuers to confirm your request.
+              Your issuance request is being processed. Please wait for related
+              issuers to confirm your request.
             </p>
           </div>
         </DialogBody>

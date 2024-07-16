@@ -20,8 +20,9 @@ import DatePicker from './controls/DatePicker';
 import moment from 'moment';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { issueCertificate, getFileInfo } from '../../api/certificate.api';
+import { set } from 'date-fns';
 const IssueCertificates = () => {
-  const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
+  const accountAddress = localStorage.getItem('walletAddress');
   const [selectedFile, setSelectedFile] = useState(null);
   const [gasFee, setGasFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -38,7 +39,7 @@ const IssueCertificates = () => {
   const [score, setScore] = useState(0);
   const [note, setNote] = useState('');
   const [expireDate, setExpiredDate] = useState(
-    moment().format('DD/MM/YYYY').toString()
+    moment().format('YYYY/MM/DD').toString()
   );
   const [certificateHash, setCertificateHash] = useState('');
 
@@ -99,7 +100,19 @@ const IssueCertificates = () => {
     }
   };
 
-  const closeModal = () => setShowModal(false);
+  const closeModal = () => {
+    setSelectedFile(null);
+    setHolderName('');
+    setIdentityNumber('');
+    setHolderAddress('');
+    setInstitution('');
+    setCertificateType('');
+    setScore(0);
+    setNote('');
+    setExpiredDate(moment().format('YYYY/MM/DD').toString());
+    setShowModal(false);
+    window.location.href = '/issuer-dashboard';
+  };
 
   const getPreviewFileUrl = async (ipfsUrl) => {
     const { pdf } = await getFileInfo(ipfsUrl);
@@ -158,14 +171,11 @@ const IssueCertificates = () => {
 
     setIsLoading(true);
     const response = await issueCertificate(data, selectedFile);
-    setIsLoading(false);
-    if (
-      response.certificate.status === 'success' &&
-      response.certificate.certificateHash
-    ) {
+    if (response.certificate.certificateHash) {
       setCertificateHash(response.certificate.certificateHash);
       const ipfsUrl = await getPreviewFileUrl(response.certificate.ipfs);
       setIpfsLink(ipfsUrl);
+      setIsLoading(false);
       setShowModal(true);
     }
   };
