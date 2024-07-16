@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Typography, Button } from '@material-tailwind/react';
+import {
+  getIssueRequestList,
+  getRevokeRequestList,
+} from '../../../api/request.api';
+import moment from 'moment';
 
 export default function PendingRequests() {
-  // Giả sử bạn có một mảng requests chứa thông tin của các request đang chờ
-  const requests = [
+  // Giả sử bạn có một mảng mockRequests chứa thông tin của các request đang chờ
+  const [requests, setRequests] = useState([]);
+  useEffect(() => {
+    const apiCalls = [getIssueRequestList(), getRevokeRequestList()];
+
+    Promise.all(apiCalls).then((data) => {
+      const [issueRequests, revokeRequests] = data;
+      const requests = [
+        ...issueRequests.map((req) => ({ ...req, type: 'Issue' })),
+        ...revokeRequests.map((req) => ({ ...req, type: 'Revoke' })),
+      ];
+      setRequests(
+        requests.sort((a, b) => moment(b.createdAt) - moment(a.createdAt))
+      );
+    });
+  }, []);
+  const mockRequests = [
     {
       id: 1,
       type: 'Issue',
@@ -41,15 +61,15 @@ export default function PendingRequests() {
       </Typography>
       <div className="flex flex-col gap-5">
         {requests.map((request) => (
-          <Card key={request.id} className="p-5">
+          <Card key={request._id} className="p-5">
             <div className="flex gap-2">
               <p className="text-sm text-white p-1 px-3 font-semibold mb-2 rounded-full bg-gray-800 w-20 text-center">
                 {request.type}
               </p>
 
-              {request.type === 'Issue' ? null : (
+              {request.type === 'Revoke' && (
                 <p className="text-sm text-white p-1 px-3 font-semibold mb-2 rounded-full bg-blue-800 w-auto text-center">
-                  {request.certificate}{' '}
+                  {request.certHash}{' '}
                   <i className="fas fa-copy cursor-pointer ml-1" />
                 </p>
               )}
@@ -58,12 +78,14 @@ export default function PendingRequests() {
             <div className="flex flex-col gap-1 mt-2">
               <p className="text-black text-sm ml-1">
                 Holder:{' '}
-                <span className="text-gray-500 mr-1">{request.holder}</span>
+                <span className="text-gray-500 mr-1">{request.address}</span>
                 <i className="fas fa-copy text-gray-500" />
               </p>
               <p className="text-black text-sm ml-1">
                 Request at:{' '}
-                <span className="text-gray-500 mr-1">{request.requestAt}</span>
+                <span className="text-gray-500 mr-1">
+                  {moment(request.createdAt).format('YYYY/MM/DD HH:mm')}
+                </span>
               </p>
             </div>
             <div className="flex justify-end">

@@ -26,3 +26,21 @@ export const revokeRequest = async (data) => {
     throw error;
   }
 };
+
+export const getIssueRequestList = async () => {
+  try {
+    const response = await axios.get(`${baseUrl}/issue`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getRevokeRequestList = async () => {
+  try {
+    const response = await axios.get(`${baseUrl}/revoke`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
