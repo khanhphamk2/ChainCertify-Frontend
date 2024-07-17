@@ -37,11 +37,10 @@ const IssueCertificates = () => {
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [curInst, setCurInst] = useState('uit');
   const [holderName, setHolderName] = useState('');
   const [identityNumber, setIdentityNumber] = useState('');
   const [holderAddress, setHolderAddress] = useState('');
-  const [institution, setInstitution] = useState('');
+  const [institution, setInstitution] = useState('uit');
   const [certificateType, setCertificateType] = useState('');
   const [score, setScore] = useState(0);
   const [note, setNote] = useState('');
@@ -211,7 +210,7 @@ const IssueCertificates = () => {
                 onChange={(e) => setCertificateType(e)}
               >
                 {certificateTypes
-                  .find((item) => item.institution === curInst)
+                  .find((item) => item.institution === institution)
                   ?.types.map((type, index) => (
                     <Option key={index} value={type}>
                       {type}
