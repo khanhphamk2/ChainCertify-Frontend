@@ -5,7 +5,7 @@ const baseUrl = 'http://localhost:3000/v1/credential';
 export const issueCertificate = async (data) => {
   try {
     const response = await axios.post(`${baseUrl}/address`, data);
-    return response.data;
+    return response;
   } catch (error) {
     throw error;
   }

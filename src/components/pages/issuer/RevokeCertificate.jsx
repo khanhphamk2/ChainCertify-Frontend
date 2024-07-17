@@ -13,8 +13,8 @@ import {
   DialogFooter,
 } from '@material-tailwind/react';
 import { useParams } from 'react-router-dom';
-import { revokeCertificate } from '../../../api/certificate.api';
 import { detectFraud } from '../../../api/fraudDetection.api';
+import { sendRevokeTransaction } from '../../../utils/signAndSendTransaction';
 
 const RevokeCertificate = () => {
   const accountAddress = '0x087791512beF6469B7ea2799a55D508a9bf6be33';
@@ -46,7 +46,14 @@ const RevokeCertificate = () => {
 
   const [transactionHash, setTransactionHash] = useState('');
 
-  const closeModal = () => setShowModal(false);
+  const [safe, setSafe] = useState(false);
+
+  const [reason, setReason] = useState('');
+
+  const closeModal = () => {
+    setShowModal(false);
+    window.location.href = '/issuer-dashboard';
+  };
 
   const handleSelectInstitution = (event) => {
     setCurInst(event);
@@ -77,63 +84,40 @@ const RevokeCertificate = () => {
   };
 
   const handleExecute = async () => {
-    // if (!certChecked) {
-    //   setShowAlert({
-    //     show: true,
-    //     message: 'Certificate public key has not been checked !',
-    //   });
-    //   setTimeout(() => {
-    //     setShowAlert({
-    //       ...showAlert,
-    //       show: false,
-    //     });
-    //   }, 3000);
-    // } else {
-    //   if (!checkValid(certPubKey)) {
-    //     setShowAlert({
-    //       show: true,
-    //       message: 'Certificate public key is not valid !',
-    //     });
-    //     setTimeout(() => {
-    //       setShowAlert({
-    //         ...showAlert,
-    //         show: false,
-    //       });
-    //     }, 3000);
-    //   } else {
-    //     setShowFraudModal(true); // Show fraud detection modal
-    //   }
-    // }
-
     setIsRevokeLoading(true);
+
+    setShowFraudModal(true);
 
     const isSafe = Boolean((await detectFraud(holderAddress)).safe);
 
-    if (isSafe) {
-      await executeRevocation();
-    } else {
-      setShowFraudModal(true);
-      setIsRevokeLoading(false);
-    }
+    setSafe(isSafe);
+
+    setIsRevokeLoading(false);
   };
 
   const executeRevocation = async () => {
+    setIsConfirmLoading(true);
     try {
       const data = {
-        msgSender: accountAddress,
+        reason,
         holder: holderAddress,
-        hash: certPubKey,
+        certHash: certPubKey,
       };
-      const response = await revokeCertificate(data);
-      if (response.status === 'success' && response.isRevoked) {
-        setTransactionHash(response.result.hash);
-        setShowModal(true);
-        setIsRevokeLoading(false);
-      }
+
+      const receipt = await sendRevokeTransaction(data);
+
+      setTransactionHash(receipt.transactionHash);
+
+      console.log(receipt);
+
+      setIsConfirmLoading(false);
+      setShowFraudModal(false);
+      setShowModal(true);
     } catch (error) {
       console.error('Error revoking certificate:', error);
       setShowErrorModal(true);
       setIsRevokeLoading(false);
+      setIsConfirmLoading(false);
     }
   };
 
@@ -191,7 +175,11 @@ const RevokeCertificate = () => {
                 </Typography>
               </div>
             )} */}
-            <Textarea label="Why Revoke ?" />
+            <Textarea
+              label="Why Revoke ?"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
             <div className="flex justify-end">
               <Button color="red" onClick={handleExecute}>
                 {isRevokeLoading ? <Spinner className="h-4 w-4" /> : 'Execute'}
@@ -249,18 +237,44 @@ const RevokeCertificate = () => {
         </DialogFooter>
       </Dialog>
       <Dialog open={showFraudModal} handler={() => setShowFraudModal(false)}>
-        <DialogHeader>Fraud Detection Warning</DialogHeader>
-        <DialogBody divider>
-          <p className="text-center mb-3">
-            {' '}
-            <i className="fas fa-warning text-[60px] text-yellow-700 mr-2"></i>
-          </p>
-          <p className="text-black">
-            Holder from address{' '}
-            <span className="text-red-600">{holderAddress}</span> is at risk of
-            fraud. Are you sure you want to continue with this action? This
-            could be a potential fraud attempt.
-          </p>
+        <DialogHeader>Fraud Detection Processing</DialogHeader>
+        <DialogBody>
+          <div className="text-center mb-3 flex justify-center">
+            {isRevokeLoading ? (
+              <Spinner className="h-10 w-10 m-4" />
+            ) : safe ? (
+              <i className="fas fa-check-circle text-[60px] text-green-700 mr-2"></i>
+            ) : (
+              <i className="fas fa-exclamation-circle text-[60px] text-yellow-700 mr-2"></i>
+            )}
+          </div>
+          <div className="text-center my-2">
+            {!isRevokeLoading &&
+              (safe ? (
+                <Typography variant="h3" color="black">
+                  Safe
+                </Typography>
+              ) : (
+                <Typography variant="h3" color="black">
+                  Fraud Detected
+                </Typography>
+              ))}
+          </div>
+          {!isRevokeLoading &&
+            (safe ? (
+              <p className="text-black">
+                Holder from address{' '}
+                <span className="text-blue-600">{holderAddress}</span> is safe.
+                You can continue your transaction !
+              </p>
+            ) : (
+              <p className="text-black">
+                Holder from address{' '}
+                <span className="text-blue-600">{holderAddress}</span> is at
+                risk of fraud. Are you sure you want to continue with this
+                transaction?
+              </p>
+            ))}
         </DialogBody>
         <DialogFooter>
           <Button
@@ -271,9 +285,11 @@ const RevokeCertificate = () => {
           >
             <span>Cancel</span>
           </Button>
-          <Button variant="gradient" onClick={handleFraudContinue}>
-            {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Check'}
-          </Button>
+          {!isRevokeLoading && (
+            <Button variant="gradient" onClick={executeRevocation}>
+              {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Continue'}
+            </Button>
+          )}
         </DialogFooter>
       </Dialog>
       <Dialog open={showErrorModal} handler={() => setShowErrorModal(false)}>

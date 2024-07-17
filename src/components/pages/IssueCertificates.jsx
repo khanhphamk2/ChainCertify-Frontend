@@ -18,14 +18,14 @@ import {
 } from '@material-tailwind/react';
 import DatePicker from './controls/DatePicker';
 import moment from 'moment';
-import detectEthereumProvider from '@metamask/detect-provider';
+import { detectFraud } from '../../api/fraudDetection.api';
 import {
   issueCertificate,
   getFileInfo,
   uploadJson,
   uploadPdf,
 } from '../../api/certificate.api';
-import { signAndSendTransaction } from '../../utils/signAndSendTransaction';
+import { sendIssueTransaction } from '../../utils/signAndSendTransaction';
 import { set } from 'date-fns';
 import { hashObject } from '../../utils/hashObject';
 const IssueCertificates = () => {
@@ -33,7 +33,7 @@ const IssueCertificates = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [gasFee, setGasFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFraudLoading, setIsFraudLoading] = useState(false);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -49,6 +49,9 @@ const IssueCertificates = () => {
     moment().format('YYYY/MM/DD').toString()
   );
   const [certificateHash, setCertificateHash] = useState('');
+
+  const [showFraudModal, setShowFraudModal] = useState(false);
+  const [safe, setSafe] = useState(false);
 
   const certificateTypes = [
     {
@@ -80,33 +83,6 @@ const IssueCertificates = () => {
     setSelectedFile(file);
   };
 
-  const handleSelectInstitution = (event) => {
-    setCurInst(event);
-  };
-
-  const openModal = () => {
-    if (isChecked) {
-      if (gasFee === 0) {
-        setIsLoading(true); // Hiển thị spinner
-
-        setTimeout(() => {
-          setIsLoading(false); // Ẩn spinner
-          setGasFee(
-            selectedFile
-              ? ((selectedFile.size / (1024 * 1024)) * 0.01).toFixed(5)
-              : 0
-          );
-          setShowModal(true);
-        }, 3000);
-      } else {
-        setShowModal(true);
-      }
-    } else {
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 5000);
-    }
-  };
-
   const closeModal = () => {
     setSelectedFile(null);
     setHolderName('');
@@ -121,18 +97,19 @@ const IssueCertificates = () => {
     window.location.href = '/issuer-dashboard';
   };
 
-  const getPreviewFileUrl = async (ipfsUrl) => {
-    const { pdf } = await getFileInfo(ipfsUrl);
-    if (pdf) {
-      const regex = /Qm[a-zA-Z0-9]+/;
-      const previewFileUrl = ipfsUrl.replace(regex, pdf);
-      console.log(previewFileUrl);
-      return previewFileUrl;
-    }
-    return '';
+  const handleExecute = async () => {
+    setIsFraudLoading(true);
+
+    setShowFraudModal(true);
+
+    const isSafe = Boolean((await detectFraud(holderAddress)).safe);
+
+    setSafe(isSafe);
+
+    setIsFraudLoading(false);
   };
 
-  const handleConfirm = async () => {
+  const executeIssuance = async () => {
     const data = {
       name: holderName,
       identityNumber,
@@ -145,19 +122,19 @@ const IssueCertificates = () => {
     };
 
     try {
-      setIsLoading(true);
-      const receipt = await signAndSendTransaction(data);
+      setIsConfirmLoading(true);
+      const { holder, note, ...info } = data;
+      const { pdfHash } = await uploadPdf(selectedFile);
+      const { jsonHash } = await uploadJson({
+        holder,
+        info,
+        pdfHash,
+        hashInfo: hashObject(info),
+      });
+      const receipt = await sendIssueTransaction({ ...data, jsonHash });
       console.log(receipt);
       if (receipt.certHash) {
         setCertificateHash(receipt.certHash);
-        const { holder, note, ...info } = data;
-        const { pdfHash } = await uploadPdf(selectedFile);
-        const { jsonHash } = await uploadJson({
-          holder,
-          info,
-          pdfHash,
-          hashInfo: hashObject(info),
-        });
         const response = await issueCertificate({
           ...data,
           certHash: receipt.certHash,
@@ -166,28 +143,18 @@ const IssueCertificates = () => {
           hash: receipt.transactionHash,
         });
 
-        if (response) {
+        if (response.status === 201) {
           setIpfsLink(
             `https://black-delicate-hamster-859.mypinata.cloud/ipfs/${pdfHash}?pinataGatewayToken=9TtgncTJIzdzv_ieLJA3Uulkt--VHz6BNjRkJU1h2mw1SB_aK6v8UN0itzHBsAVY`
           );
+          setShowFraudModal(false);
           setShowModal(true);
-          setIsLoading(false);
+          setIsConfirmLoading(false);
         }
       }
     } catch (error) {
       throw error;
     }
-
-    // if (receipt.certHash) {
-    //   setCertificateHash(receipt.certHash);
-    //   const response = await issueCertificate({
-
-    //   });
-    //   const ipfsUrl = await getPreviewFileUrl(response.certificate.ipfs);
-    //   setIpfsLink(ipfsUrl);
-    //   setIsLoading(false);
-    //   setShowModal(true);
-    // }
   };
 
   return (
@@ -340,8 +307,8 @@ const IssueCertificates = () => {
                 You have to agree with our terms and conditions.
               </Alert>
             </div>
-            <Button color="blue" className="m-2" onClick={handleConfirm}>
-              {isLoading ? <Spinner className="h-4 w-4" /> : 'Execute'}
+            <Button color="blue" className="m-2" onClick={handleExecute}>
+              Execute
             </Button>
           </Card>
         </div>
@@ -394,6 +361,65 @@ const IssueCertificates = () => {
           <Button variant="gradient" onClick={closeModal} className="mr-1">
             <span>Close</span>
           </Button>
+        </DialogFooter>
+      </Dialog>
+      <Dialog open={showFraudModal} handler={() => setShowFraudModal(false)}>
+        <DialogHeader>Fraud Detection Processing</DialogHeader>
+        <DialogBody>
+          <div className="text-center mb-3 flex justify-center">
+            {isFraudLoading ? (
+              <Spinner className="h-10 w-10 m-4" />
+            ) : safe ? (
+              <i className="fas fa-check-circle text-[60px] text-green-700 mr-2"></i>
+            ) : (
+              <i className="fas fa-exclamation-circle text-[60px] text-yellow-700 mr-2"></i>
+            )}
+          </div>
+          <div className="text-center my-2">
+            {!isFraudLoading &&
+              (safe ? (
+                <Typography variant="h3" color="black">
+                  Safe
+                </Typography>
+              ) : (
+                <Typography variant="h3" color="black">
+                  Fraud Detected
+                </Typography>
+              ))}
+          </div>
+          {!isFraudLoading &&
+            (safe ? (
+              <p className="text-black">
+                Holder from address{' '}
+                <span className="text-blue-600">{holderAddress}</span> is safe.
+                You can continue your transaction !
+              </p>
+            ) : (
+              <p className="text-black">
+                Holder from address{' '}
+                <span className="text-blue-600">{holderAddress}</span> is at
+                risk of fraud. Are you sure you want to continue with this
+                transaction?
+              </p>
+            ))}
+        </DialogBody>
+        <DialogFooter>
+          <Button
+            variant="text"
+            color="red"
+            onClick={() => {
+              setIsFraudLoading(false);
+              setShowFraudModal(false);
+            }}
+            className="mr-1"
+          >
+            <span>Cancel</span>
+          </Button>
+          {!isFraudLoading && (
+            <Button variant="gradient" onClick={executeIssuance}>
+              {isConfirmLoading ? <Spinner className="h-4 w-4" /> : 'Continue'}
+            </Button>
+          )}
         </DialogFooter>
       </Dialog>
     </div>
