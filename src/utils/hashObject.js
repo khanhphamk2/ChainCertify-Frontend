@@ -1,6 +1,6 @@
-const { ethers } = require('ethers');
+import { ethers } from 'ethers';
 
-const concatJSONStrings = (jsonData) => {
+export const concatJSONStrings = (jsonData) => {
   let concatenatedString = '';
 
   const concatValues = (obj) => {
@@ -17,12 +17,8 @@ const concatJSONStrings = (jsonData) => {
   return concatenatedString;
 };
 
-const hashObject = (jsonData) => {
+export const hashObject = (jsonData) => {
   const jsonString = concatJSONStrings(jsonData);
-  const hash = ethers.id(jsonString);
+  const hash = ethers.utils.id(jsonString);
   return hash;
-};
-
-module.exports = {
-  hashObject,
 };

@@ -2,16 +2,9 @@ import axios from 'axios';
 
 const baseUrl = 'http://localhost:3000/v1/credential';
 
-export const issueCertificate = async (data, file) => {
+export const issueCertificate = async (data) => {
   try {
-    const formData = new FormData();
-    formData.append('jsonData', JSON.stringify(data));
-    formData.append('pdfFile', file);
-    const response = await axios.post(`${baseUrl}/address`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post(`${baseUrl}/address`, data);
     return response.data;
   } catch (error) {
     throw error;
@@ -68,4 +61,25 @@ export const getCertificatesList = async (address) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const uploadJson = async (data) => {
+  try {
+    const response = await axios.post(`${baseUrl}/uploadJson`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadPdf = async (file) => {
+  const formData = new FormData();
+  formData.append('pdfFile', file);
+  const response = await axios.post(`${baseUrl}/uploadPdf`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
 };

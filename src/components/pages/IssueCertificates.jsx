@@ -19,8 +19,15 @@ import {
 import DatePicker from './controls/DatePicker';
 import moment from 'moment';
 import detectEthereumProvider from '@metamask/detect-provider';
-import { issueCertificate, getFileInfo } from '../../api/certificate.api';
+import {
+  issueCertificate,
+  getFileInfo,
+  uploadJson,
+  uploadPdf,
+} from '../../api/certificate.api';
+import { signAndSendTransaction } from '../../utils/signAndSendTransaction';
 import { set } from 'date-fns';
+import { hashObject } from '../../utils/hashObject';
 const IssueCertificates = () => {
   const accountAddress = localStorage.getItem('walletAddress');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -126,37 +133,6 @@ const IssueCertificates = () => {
   };
 
   const handleConfirm = async () => {
-    // setIsConfirmLoading(true);
-    // const provider = await detectEthereumProvider();
-
-    // if (provider) {
-    //   try {
-    //     const accounts = await provider.request({
-    //       method: 'eth_requestAccounts',
-    //     });
-    //     const transactionParameters = {
-    //       to: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', // Địa chỉ hợp đồng của bạn
-    //       from: accounts[0],
-    //       value: '0x9184e72a000', // Giá trị giao dịch (0 ETH trong trường hợp này)
-    //       data: '0xbDA5747bF2123213123123D65F08deb54cb465eB87D40e51B197E', // Dữ liệu giao dịch
-    //     };
-
-    //     const txHash = await provider.request({
-    //       method: 'eth_sendTransaction',
-    //       params: [transactionParameters],
-    //     });
-
-    //     console.log('Transaction sent:', txHash);
-    //     setIsConfirmLoading(false);
-    //     openModal();
-    //   } catch (error) {
-    //     console.error('Transaction failed:', error);
-    //     setIsConfirmLoading(false);
-    //   }
-    // } else {
-    //   console.error('Please install MetaMask!');
-    //   setIsConfirmLoading(false);
-    // }
     const data = {
       name: holderName,
       identityNumber,
@@ -164,20 +140,54 @@ const IssueCertificates = () => {
       institution,
       type: certificateType,
       score: parseInt(score),
-      note,
       expireDate,
-      msgSender: accountAddress,
+      note,
     };
 
-    setIsLoading(true);
-    const response = await issueCertificate(data, selectedFile);
-    if (response.certificate.certificateHash) {
-      setCertificateHash(response.certificate.certificateHash);
-      const ipfsUrl = await getPreviewFileUrl(response.certificate.ipfs);
-      setIpfsLink(ipfsUrl);
-      setIsLoading(false);
-      setShowModal(true);
+    try {
+      setIsLoading(true);
+      const receipt = await signAndSendTransaction(data);
+      console.log(receipt);
+      if (receipt.certHash) {
+        setCertificateHash(receipt.certHash);
+        const { holder, note, ...info } = data;
+        const { pdfHash } = await uploadPdf(selectedFile);
+        const { jsonHash } = await uploadJson({
+          holder,
+          info,
+          pdfHash,
+          hashInfo: hashObject(info),
+        });
+        const response = await issueCertificate({
+          ...data,
+          certHash: receipt.certHash,
+          pdfIpfsHash: pdfHash,
+          jsonIpfsHash: jsonHash,
+          hash: receipt.transactionHash,
+        });
+
+        if (response) {
+          setIpfsLink(
+            `https://black-delicate-hamster-859.mypinata.cloud/ipfs/${pdfHash}?pinataGatewayToken=9TtgncTJIzdzv_ieLJA3Uulkt--VHz6BNjRkJU1h2mw1SB_aK6v8UN0itzHBsAVY`
+          );
+          setShowModal(true);
+          setIsLoading(false);
+        }
+      }
+    } catch (error) {
+      throw error;
     }
+
+    // if (receipt.certHash) {
+    //   setCertificateHash(receipt.certHash);
+    //   const response = await issueCertificate({
+
+    //   });
+    //   const ipfsUrl = await getPreviewFileUrl(response.certificate.ipfs);
+    //   setIpfsLink(ipfsUrl);
+    //   setIsLoading(false);
+    //   setShowModal(true);
+    // }
   };
 
   return (

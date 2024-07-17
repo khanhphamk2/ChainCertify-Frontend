@@ -1,0 +1,45 @@
+const config = {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+
+  // Database
+  MONGODB_URL: process.env.MONGODB_URL,
+
+  // INFURA
+  INFURA_API_KEY: process.env.INFURA_API_KEY,
+  INFURA_SECRET_KEY: process.env.INFURA_SECRET_KEY,
+
+  // Web3
+  LOCAL_RPC: process.env.LOCAL_RPC,
+  L1_RPC: process.env.L1_RPC,
+  L2_RPC: process.env.L2_RPC,
+
+  // Smart Contract
+  LOCAL_CRED_CONTRACT_ADDRESS: process.env.LOCAL_CRED_CONTRACT_ADDRESS,
+  LOCAL_ISSUER_CONTRACT_ADDRESS: process.env.LOCAL_ISSUER_CONTRACT_ADDRESS,
+  REVOCATION_CONSENSUS_CONTRACT_ADDRESS:
+    process.env.REVOCATION_CONSENSUS_CONTRACT_ADDRESS,
+
+  L1_CRED_CONTRACT_ADDRESS: process.env.L1_CRED_CONTRACT_ADDRESS,
+  L1_ISSUER_CONTRACT_ADDRESS: process.env.L1_ISSUER_CONTRACT_ADDRESS,
+
+  L2_CRED_CONTRACT: process.env.L2_CRED_CONTRACT,
+  L2_ISSUER_CONTRACT: process.env.L2_ISSUER_CONTRACT,
+
+  // Account
+  ACCOUNT_ADDRESS: process.env.ACCOUNT_ADDRESS,
+  PRIVATE_KEY: process.env.PRIVATE_KEY,
+
+  // Pinata - IPFS
+  ADMIN_IPFS_JWT_KEY: process.env.ADMIN_IPFS_JWT_KEY,
+  IPFS_ACCESS_TOKEN_KEY_1: process.env.IPFS_ACCESS_TOKEN_KEY_1,
+  IPFS_API_KEY: process.env.IPFS_API_KEY,
+  IPFS_API_SECRET_KEY: process.env.IPFS_API_SECRET_KEY,
+  IPFS_JWT_KEY: process.env.IPFS_JWT_KEY,
+
+  // Fraud Detection
+  FRAUD_DETECTION: process.env.FRAUD_DETECTION,
+  LOCAL_FD: process.env.LOCAL_FD,
+};
+
+module.exports = config;
