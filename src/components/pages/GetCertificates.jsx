@@ -19,42 +19,10 @@ import Ipfs from '../../assets/icons/ipfs.svg';
 import Mongodb from '../../assets/icons/mongodb.svg';
 import { getCertificatesList } from '../../api/certificate.api';
 import moment from 'moment';
-
-const TABLE_ROWS = [
-  {
-    name: 'TOEIC Certificates - 2021',
-    address: '0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c',
-    size: '1.2 MB',
-    uploadedAt: '2021-09-01',
-  },
-  {
-    name: 'UIT Graduation Certificate',
-    address: '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4',
-    size: '1.5 MB',
-    uploadedAt: '2023-11-08',
-  },
-  {
-    name: 'Coursera - UI/UX Design MasterTrack Certificate',
-    address: '0x1a2B3c4D5E6F7A8B9c0D1E2F3A4B5C6D7E8F9A0',
-    size: '1.8 MB',
-    uploadedAt: '2021-20-11',
-  },
-  {
-    name: 'Writing Tools & Hacks Course - Udemy Certificate of Completion',
-    address: '0x617F2E2fD72FD9D5503197092aC168c91465E7f2',
-    size: '1.3 MB',
-    uploadedAt: '2022-01-01',
-  },
-  {
-    name: 'Cisco Certified Network Associate',
-    address: '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4',
-    size: '1.7 MB',
-    uploadedAt: '2024-01-26',
-  },
-];
+import { ethers } from 'ethers';
 
 function GetCertificates() {
-  const [tableRows, setTableRows] = useState(TABLE_ROWS);
+  const [tableRows, setTableRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [curIndex, setCurIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,9 +45,10 @@ function GetCertificates() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await getCertificatesList(
-          '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'
+        const wallet = ethers.utils.getAddress(
+          localStorage.getItem('walletAddress')
         );
+        const data = await getCertificatesList(wallet);
         setTableRows(data.result);
         setDataFetched(true);
       } catch (error) {
@@ -128,8 +97,8 @@ function GetCertificates() {
                 {!isLoading ? (
                   tableRows.length > 0 ? (
                     tableRows.map(
-                      ({ ipfsHash, certHash, issueDate }, index) => {
-                        const isLast = index === TABLE_ROWS.length - 1;
+                      ({ ipfsHash, certHash, issueDate, isRevoked }, index) => {
+                        const isLast = index === tableRows.length - 1;
                         const classes =
                           (isLast
                             ? 'p-4'
@@ -141,7 +110,11 @@ function GetCertificates() {
                             key={index}
                             onClick={() => {
                               navigate('/get/' + certHash, {
-                                state: { ipfsHash, certHash, issueDate },
+                                state: {
+                                  ipfsHash,
+                                  certHash,
+                                  issueDate,
+                                },
                               });
                             }}
                           >
@@ -155,7 +128,12 @@ function GetCertificates() {
                                   color="blue-gray"
                                   className="font-normal pl-2"
                                 >
-                                  {ipfsHash}
+                                  {ipfsHash}{' '}
+                                  {isRevoked && (
+                                    <span className="text-sm text-white p-1 px-3 font-semibold mb-2 ml-2 rounded-full bg-blue-800 w-auto text-center">
+                                      Revoked
+                                    </span>
+                                  )}
                                   <div>
                                     <span className="text-gray-500 text-sm mr-1">
                                       {certHash}
